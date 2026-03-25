@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.DS_Store
+.vscode/
+.idea/
+*.log
+data/raw/
+data/processed/
+# Note: Keeping src and api

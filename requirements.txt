@@ -1,0 +1,11 @@
+yfinance
+pandas
+numpy
+xgboost
+scikit-learn
+fastapi
+uvicorn
+requests
+python-dotenv
+alpha_vantage
+textblob
