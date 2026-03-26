@@ -1,4 +1,4 @@
-import yfinance as yf
+from src.engine.hunter.SovereignAuditor import SovereignAuditor
 import pandas as pd
 
 class PledgeAuditor:
@@ -7,13 +7,16 @@ class PledgeAuditor:
     Identifies if founders have leveraged their ownership, creating high-risk floor vulnerability.
     """
 
+    def __init__(self):
+        self.auditor = SovereignAuditor()
+
     def audit_pledge_rate(self, ticker_symbol):
         """
         Calculates the Pledge Rate (PR) heuristic.
         If actual NSE/SEC data is unavailable, it uses the Institutional-to-Insider Leverage (IIL) proxy.
         """
         print(f"[*] Auditing Pledge Rate (PR) for {ticker_symbol}...")
-        ticker = yf.Ticker(ticker_symbol)
+        ticker = self.auditor.get_ticker_object(ticker_symbol)
         info = ticker.info
         
         # 1. Ownership Metrics

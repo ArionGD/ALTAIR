@@ -1,12 +1,13 @@
-import yfinance as yf
 import pandas as pd
 import os
 import time
 from datetime import datetime
+from src.engine.hunter.SovereignAuditor import SovereignAuditor
 
 class GlobalBilateralCollector:
     def __init__(self, base_dir="data/raw"):
         self.base_dir = base_dir
+        self.auditor = SovereignAuditor()
         self.markets = {
             "US": {
                 "BFSI": ["JPM", "BAC", "MS", "GS", "WFC", "BLK", "PYPL", "AXP", "SCHW", "C"],
@@ -31,14 +32,18 @@ class GlobalBilateralCollector:
         }
 
     def fetch_metrics(self, ticker_symbol):
-        ticker = yf.Ticker(ticker_symbol)
-        info = ticker.info
+        print(f"[*] Auditing {ticker_symbol} (Sovereign Flow)...")
+        info = self.auditor.get_info(ticker_symbol)
+        
+        # Cross-Market Normalization (NSE Quote API vs yf.info)
+        pe = info.get('trailingPE', info.get('pdSectorPe', 0))
+        price = info.get('currentPrice', info.get('previousClose', 0))
+        
         return {
             "ticker": ticker_symbol,
-            "pe_ratio": info.get('trailingPE', 0),
-            "debt_to_equity": info.get('debtToEquity', 0),
-            "revenue_growth": info.get('revenueGrowth', 0),
-            "free_cash_flow": info.get('freeCashflow', 0)
+            "pe_ratio": pe,
+            "current_price": price,
+            "industry": info.get('industry', 'N/A')
         }
 
     def run_global_audit(self):

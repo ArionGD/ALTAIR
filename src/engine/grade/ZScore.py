@@ -1,4 +1,4 @@
-import yfinance as yf
+from src.engine.hunter.SovereignAuditor import SovereignAuditor
 
 class ZScoreEngine:
     """
@@ -11,9 +11,12 @@ class ZScoreEngine:
     - < 1.8: Distress Zone (High Bankruptcy Probability)
     """
 
+    def __init__(self):
+        self.auditor = SovereignAuditor()
+
     def calculate_altman_z(self, ticker_symbol):
         print(f"[*] Calculating Sovereign Z-Score for {ticker_symbol}...")
-        ticker = yf.Ticker(ticker_symbol)
+        ticker = self.auditor.get_ticker_object(ticker_symbol)
         
         # 1. Fetch Key Balance Sheet & Income Data
         # We use a fallback logic in case some fields are missing
