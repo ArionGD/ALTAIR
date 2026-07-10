@@ -1,5 +1,5 @@
 import requests
-from nsepython import nse_get_fno_lot_sizes, nse_get_index_quote
+# from nsepython import nse_get_fno_lot_sizes, nse_get_index_quote
 import json
 import pandas as pd
 import time
