@@ -30,6 +30,26 @@
 		</button>
 
 		<button
+			@click="setTab('analytics')"
+			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
+			:class="activeTab === 'analytics'
+				? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold before:content-[\'\'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-indigo-600 dark:before:bg-indigo-400 before:rounded-r-[3px]'
+				: 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'"
+		>
+			<i data-lucide="flask-conical" class="w-4 h-4 shrink-0"></i> Analytics
+		</button>
+
+		<button
+			@click="setTab('egb')"
+			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
+			:class="activeTab === 'egb'
+				? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold before:content-[\'\'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-indigo-600 dark:before:bg-indigo-400 before:rounded-r-[3px]'
+				: 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'"
+		>
+			<i data-lucide="box" class="w-4 h-4 shrink-0"></i> EGB GlassBox
+		</button>
+
+		<button
 			@click="setTab('archive')"
 			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
 			:class="activeTab === 'archive'

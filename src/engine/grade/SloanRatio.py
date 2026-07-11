@@ -31,7 +31,7 @@ class SloanRatioEngine:
 
             # 2. Extract Latest Year Data
             net_income = financials.loc['Net Income'].iloc[0]
-            cfo = cashflow.loc['Cash Flow From Operating Activities'].iloc[0]
+            cfo = cashflow.loc['Operating Cash Flow'].iloc[0]
             total_assets = balance_sheet.loc['Total Assets'].iloc[0]
             
             # 3. Calculation

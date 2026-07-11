@@ -1,7 +1,9 @@
 yfinance
+pandas-datareader
 pandas
 numpy
 xgboost
+shap
 scikit-learn
 fastapi
 uvicorn

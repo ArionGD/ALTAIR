@@ -58,6 +58,14 @@
 				{% include "core/_strikes.html" %}
 			</template>
 
+			<template x-if="activeTab === 'analytics'">
+				{% include "core/_analytics.html" %}
+			</template>
+
+			<template x-if="activeTab === 'egb'">
+				{% include "core/_egb.html" %}
+			</template>
+
 			<template x-if="activeTab === 'archive'">
 				{% include "core/_archive.html" %}
 			</template>
@@ -114,13 +122,38 @@
 				archiveColumns: [],
 				archiveRows: [],
 				archiveError: "",
+				universe: {},
+				universeLoaded: false,
+				egbTiers: [],
+				egbTiersLoaded: false,
+				egbError: "",
+				egbActiveTier: null,
+				egbFindings: "",
+				egbFindingsError: "",
+				egbChart: null,
+				egbCompareChart: null,
+				egbComparePeriod: "1Y",
+				egbCompareSeries: [],
+				egbCompareLabels: [],
+				egbCompareLoading: false,
+				egbCompareError: "",
+				aMarket: "US",
+				aSector: "",
+				aSubSector: "",
+				aBaselinePrice: 80,
+				aTargetPrice: 100,
+				scenarioRows: [],
+				scenarioLoading: false,
+				scenarioError: "",
+				scenarioRan: false,
 				columns: [
 					{ key: "ticker", label: "Ticker" },
 					{ key: "market", label: "Market" },
 					{ key: "sector", label: "Sector" },
+					{ key: "sub_sector", label: "Sub-Sector" },
 					{ key: "pe_ratio", label: "P/E" },
-					{ key: "debt_to_equity", label: "Debt/Equity" },
-					{ key: "revenue_growth", label: "Rev Growth" },
+					{ key: "z_score", label: "Z-Score" },
+					{ key: "f_score", label: "F-Score" },
 					{ key: "bailout_probability", label: "Bailout %" },
 					{ key: "astra_strike_score", label: "Strike Score" },
 				],
@@ -140,6 +173,8 @@
 					return {
 						overview: "Overview",
 						strikes: "Strike List",
+						analytics: "Analytics",
+						egb: "EGB GlassBox",
 						archive: "Past Analysis",
 						guide: "Guide",
 					}[this.activeTab] ?? "Dashboard";
@@ -333,9 +368,19 @@
 						// the now-detached element on its next internal tick.
 						this.destroyCharts();
 					}
+					if (this.activeTab === "egb" && tab !== "egb") {
+						if (this.egbChart) { this.egbChart.destroy(); this.egbChart = null; }
+						if (this.egbCompareChart) { this.egbCompareChart.destroy(); this.egbCompareChart = null; }
+					}
 					this.activeTab = tab;
 					if (tab === "archive" && !this.archiveFilesLoaded) {
 						this.loadArchiveList();
+					}
+					if (tab === "analytics" && !this.universeLoaded) {
+						this.loadUniverse();
+					}
+					if (tab === "egb" && !this.egbTiersLoaded) {
+						this.loadEgbTiers();
 					}
 					this.$nextTick(() => this.refreshIcons());
 				},
@@ -380,6 +425,277 @@
 						this.archiveError = `Could not load ${filename}: ${err.message}`;
 					}
 					this.$nextTick(() => this.refreshIcons());
+				},
+
+				// --- Analytics tab: universe drill-down + oil scenario ---
+				async loadUniverse() {
+					if (this.universeLoaded) return;
+					try {
+						const res = await fetch("/api/v1/universe");
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.universe = await res.json();
+						this.universeLoaded = true;
+						// Selects always need a valid sector/sub-sector — the scoped
+						// scoring endpoint requires both, there's no "all" option.
+						this.aSector = this.aSectors()[0] ?? "";
+						this.aSubSector = this.aSubSectors()[0] ?? "";
+					} catch (err) {
+						this.scenarioError = `Could not load ticker universe: ${err.message}`;
+					}
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				aSectors() {
+					const m = this.universe[this.aMarket];
+					return m ? Object.keys(m) : [];
+				},
+
+				aSubSectors() {
+					const m = this.universe[this.aMarket];
+					if (!m || !this.aSector || !m[this.aSector]) return [];
+					return Object.keys(m[this.aSector]);
+				},
+
+				onAMarketChange() {
+					this.aSector = this.aSectors()[0] ?? "";
+					this.aSubSector = this.aSubSectors()[0] ?? "";
+				},
+
+				onASectorChange() {
+					this.aSubSector = this.aSubSectors()[0] ?? "";
+				},
+
+				async runOilScenario() {
+					if (!this.aSector || !this.aSubSector) {
+						this.scenarioError = "Pick a sector and sub-sector first.";
+						return;
+					}
+					this.scenarioLoading = true;
+					this.scenarioError = "";
+					try {
+						const params = new URLSearchParams({
+							baseline_price: this.aBaselinePrice,
+							target_price: this.aTargetPrice,
+							market: this.aMarket,
+							sector: this.aSector,
+							sub_sector: this.aSubSector,
+						});
+
+						// Scores just the ~10 tickers in this sub-sector, live — not
+						// the full universe, so this stays fast enough to run inline.
+						const res = await fetch(`/api/v1/scenario/oil?${params.toString()}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.scenarioRows = await res.json();
+						this.scenarioRan = true;
+					} catch (err) {
+						this.scenarioRows = [];
+						this.scenarioError = `Could not run scenario: ${err.message}`;
+					}
+					this.scenarioLoading = false;
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				verdictClass(verdict) {
+					if (!verdict) return "";
+					if (verdict.startsWith("HARD SHORT")) return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+					if (verdict.startsWith("TEMPORARY")) return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
+					if (verdict.startsWith("WEAK")) return "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400";
+					if (verdict.startsWith("BENEFICIARY")) return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+					return "bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400";
+				},
+
+				// --- EGB GlassBox tab: per-tier pattern-finding results ---
+				async loadEgbTiers() {
+					if (this.egbTiersLoaded) return;
+					this.egbError = "";
+					try {
+						const res = await fetch("/api/v1/egb/tiers");
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.egbTiers = await res.json();
+						this.egbTiersLoaded = true;
+						if (this.egbTiers.length > 0) {
+							await this.selectEgbTier(this.egbTiers[this.egbTiers.length - 1].tier);
+						}
+					} catch (err) {
+						this.egbTiers = [];
+						this.egbError = `Could not load EGB tier results: ${err.message}`;
+					}
+					await this.loadEgbCompareChart();
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				async loadEgbCompareChart() {
+					this.egbCompareLoading = true;
+					this.egbCompareError = "";
+					try {
+						const res = await fetch(`/api/v1/egb/timeseries?period=${this.egbComparePeriod}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						this.egbCompareLabels = data.labels;
+						this.egbCompareSeries = data.series;
+					} catch (err) {
+						this.egbCompareLabels = [];
+						this.egbCompareSeries = [];
+						this.egbCompareError = `Could not load comparison chart: ${err.message}`;
+					}
+					this.egbCompareLoading = false;
+					this.$nextTick(() => this.renderEgbCompareChart());
+				},
+
+				setEgbComparePeriod(period) {
+					this.egbComparePeriod = period;
+					this.loadEgbCompareChart();
+				},
+
+				renderEgbCompareChart() {
+					if (!this.$refs.egbCompareChart) return;
+					if (this.egbCompareChart) this.egbCompareChart.destroy();
+
+					const c = this.chartColors();
+					// Fixed, distinguishable palette per series — unlike the single-
+					// hue magnitude bars elsewhere in this dashboard, a multi-line
+					// comparison chart needs each line to read as a distinct series.
+					const palette = ["#f59e0b", "#0ea5e9", "#ef4444", "#8b5cf6", "#10b981"];
+
+					this.egbCompareChart = new Chart(this.$refs.egbCompareChart, {
+						type: "line",
+						data: {
+							labels: this.egbCompareLabels,
+							datasets: this.egbCompareSeries.map((s, i) => ({
+								label: s.label,
+								data: s.values,
+								borderColor: palette[i % palette.length],
+								backgroundColor: palette[i % palette.length],
+								borderWidth: 2,
+								pointRadius: 0,
+								tension: 0.15,
+								spanGaps: true,
+							})),
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							interaction: { mode: "index", intersect: false },
+							plugins: {
+								legend: { position: "top", labels: { color: c.labels, usePointStyle: true } },
+								tooltip: {
+									callbacks: {
+										label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.y > 0 ? "+" : ""}${ctx.parsed.y.toFixed(2)}%`,
+									},
+								},
+							},
+							scales: {
+								x: { grid: { display: false }, ticks: { color: c.ticks, maxTicksLimit: 10 } },
+								y: {
+									grid: { color: c.grid },
+									ticks: { color: c.ticks, callback: (v) => `${v > 0 ? "+" : ""}${v}%` },
+									title: { display: true, text: "% change from period start", color: c.ticks },
+								},
+							},
+						},
+					});
+				},
+
+				async selectEgbTier(tier) {
+					this.egbActiveTier = tier;
+					this.egbFindingsError = "";
+					try {
+						const res = await fetch(`/api/v1/egb/findings/${encodeURIComponent(tier)}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						this.egbFindings = data.content;
+					} catch (err) {
+						this.egbFindings = "";
+						this.egbFindingsError = `Could not load findings: ${err.message}`;
+					}
+					this.$nextTick(() => {
+						this.refreshIcons();
+						this.renderEgbChart();
+					});
+				},
+
+				egbActiveTierData() {
+					return this.egbTiers.find((t) => t.tier === this.egbActiveTier) ?? null;
+				},
+
+				renderEgbChart() {
+					const tierData = this.egbActiveTierData();
+					if (!tierData || !this.$refs.egbChart) return;
+					if (this.egbChart) this.egbChart.destroy();
+
+					const c = this.chartColors();
+					const factors = [...tierData.factors].sort((a, b) => b.mean_abs_shap_impact - a.mean_abs_shap_impact);
+
+					this.egbChart = new Chart(this.$refs.egbChart, {
+						type: "bar",
+						data: {
+							labels: factors.map((f) => f.factor.replace(/_/g, " ")),
+							datasets: [{
+								data: factors.map((f) => f.mean_abs_shap_impact),
+								backgroundColor: factors.map((f) => (f.correlation >= 0 ? c.bar : "#6366f1")),
+								borderRadius: 4,
+								maxBarThickness: 24,
+							}],
+						},
+						options: {
+							indexAxis: "y",
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							plugins: {
+								legend: { display: false },
+								tooltip: {
+									callbacks: {
+										label: (ctx) => {
+											const f = factors[ctx.dataIndex];
+											return ` SHAP impact: ${f.mean_abs_shap_impact.toFixed(5)} (corr ${f.correlation})`;
+										},
+									},
+								},
+							},
+							scales: {
+								x: { grid: { color: c.grid }, ticks: { color: c.ticks }, beginAtZero: true },
+								y: { grid: { display: false }, ticks: { color: c.labels } },
+							},
+						},
+					});
+				},
+
+				renderMarkdown(md) {
+					// Minimal, dependency-free markdown rendering — just enough for
+					// these findings docs (headings, bold, tables, lists), not a
+					// general-purpose parser.
+					if (!md) return "";
+					const lines = md.split("\n");
+					let html = "";
+					let inTable = false;
+					let inList = false;
+					for (const line of lines) {
+						if (/^\|.*\|$/.test(line.trim())) {
+							if (!inTable) { html += "<table class=\"egb-md-table\">"; inTable = true; }
+							if (/^\|[\s-:|]+\|$/.test(line.trim())) continue;
+							const cells = line.trim().slice(1, -1).split("|").map((c) => c.trim());
+							html += "<tr>" + cells.map((c) => `<td>${c}</td>`).join("") + "</tr>";
+							continue;
+						} else if (inTable) { html += "</table>"; inTable = false; }
+
+						if (/^- /.test(line)) {
+							if (!inList) { html += "<ul>"; inList = true; }
+							html += `<li>${line.slice(2)}</li>`;
+							continue;
+						} else if (inList) { html += "</ul>"; inList = false; }
+
+						if (line.startsWith("# ")) html += `<h2>${line.slice(2)}</h2>`;
+						else if (line.startsWith("## ")) html += `<h3>${line.slice(3)}</h3>`;
+						else if (line.trim() === "") html += "";
+						else html += `<p>${line}</p>`;
+					}
+					if (inTable) html += "</table>";
+					if (inList) html += "</ul>";
+					return html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`(.+?)`/g, "<code>$1</code>");
 				},
 
 				setSort(key) {

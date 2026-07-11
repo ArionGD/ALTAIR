@@ -33,7 +33,7 @@ class PiotroskiScoreEngine:
             # --- I. Profitability (4 pts) ---
             net_income = financials.loc['Net Income'].iloc[0]
             prev_net_income = financials.loc['Net Income'].iloc[1] if len(financials.columns) > 1 else net_income
-            cfo = cashflow.loc['Cash Flow From Operating Activities'].iloc[0]
+            cfo = cashflow.loc['Operating Cash Flow'].iloc[0]
             total_assets = balance_sheet.loc['Total Assets'].iloc[0]
             prev_total_assets = balance_sheet.loc['Total Assets'].iloc[1] if len(balance_sheet.columns) > 1 else total_assets
             
@@ -46,13 +46,28 @@ class PiotroskiScoreEngine:
             if cfo > net_income: f_score += 1 # 4. Accrual quality (CFO > NI)
             
             # --- II. Leverage/Liquidity (3 pts) ---
-            # Simplification for ALTAIR (Long-term debt check)
             lt_debt = balance_sheet.loc['Total Debt'].iloc[0] if 'Total Debt' in balance_sheet.index else 0
             prev_lt_debt = balance_sheet.loc['Total Debt'].iloc[1] if 'Total Debt' in balance_sheet.index and len(balance_sheet.columns) > 1 else 0
-            
+
             if lt_debt < prev_lt_debt: f_score += 1 # 5. Lower leverage
-            # 6. Current Ratio improvement (Optional, we skip for speed)
-            # 7. No new shares (Optional, we skip for speed)
+
+            # 6. Current Ratio improvement
+            curr_assets = balance_sheet.loc['Current Assets'].iloc[0] if 'Current Assets' in balance_sheet.index else None
+            curr_liabs = balance_sheet.loc['Current Liabilities'].iloc[0] if 'Current Liabilities' in balance_sheet.index else None
+            prev_curr_assets = balance_sheet.loc['Current Assets'].iloc[1] if 'Current Assets' in balance_sheet.index and len(balance_sheet.columns) > 1 else None
+            prev_curr_liabs = balance_sheet.loc['Current Liabilities'].iloc[1] if 'Current Liabilities' in balance_sheet.index and len(balance_sheet.columns) > 1 else None
+
+            if curr_assets is not None and curr_liabs and prev_curr_assets is not None and prev_curr_liabs:
+                current_ratio = curr_assets / curr_liabs
+                prev_current_ratio = prev_curr_assets / prev_curr_liabs
+                if current_ratio > prev_current_ratio: f_score += 1 # 6. Improved liquidity
+
+            # 7. No new share issuance (dilution check)
+            shares_out = balance_sheet.loc['Share Issued'].iloc[0] if 'Share Issued' in balance_sheet.index else None
+            prev_shares_out = balance_sheet.loc['Share Issued'].iloc[1] if 'Share Issued' in balance_sheet.index and len(balance_sheet.columns) > 1 else None
+
+            if shares_out is not None and prev_shares_out is not None:
+                if shares_out <= prev_shares_out: f_score += 1 # 7. No dilution
             
             # --- III. Operating Efficiency (2 pts) ---
             gross_profit = financials.loc['Gross Profit'].iloc[0]

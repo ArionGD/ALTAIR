@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from src.api.StrikeRoutes import router as strike_router
 from src.api.DashboardRoutes import router as dashboard_router
 from src.api.ArchiveRoutes import router as archive_router
+from src.api.ScenarioRoutes import router as scenario_router
+from src.api.EGBRoutes import router as egb_router
 from src.api.templates import templates
 
 # Load Environment Variables
@@ -33,6 +35,8 @@ app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 app.include_router(strike_router)
 app.include_router(dashboard_router)
 app.include_router(archive_router)
+app.include_router(scenario_router)
+app.include_router(egb_router)
 
 @app.get("/")
 async def root(request: Request):

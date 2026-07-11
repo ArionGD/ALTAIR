@@ -43,9 +43,10 @@
 						<td class="py-3 pr-4 font-bold" x-text="row.ticker"></td>
 						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="row.market ?? '—'"></td>
 						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="row.sector ?? '—'"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="(row.sub_sector ?? '—').replace(/_/g, ' ')"></td>
 						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.pe_ratio)"></td>
-						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.debt_to_equity)"></td>
-						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.revenue_growth * 100, 1) + '%'"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.z_score)"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="row.f_score ?? '—'"></td>
 						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.bailout_probability, 0)"></td>
 						<td class="py-3 pr-4 font-black text-rose-600 dark:text-rose-400" x-text="fmt(row.astra_strike_score)"></td>
 					</tr>
