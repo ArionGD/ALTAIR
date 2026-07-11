@@ -1,0 +1,335 @@
+﻿{% extends "user/user_base.html" %}
+{% load static %}
+
+{% block title %}Altair — Tax Summary Report (FY 2025-26){% endblock %}
+{% block page_title %}Comprehensive Tax Report{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        aside, .no-print { display: none !important; }
+        main { margin-left: 0 !important; width: 100% !important; }
+        .report-card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8 pb-20">
+    <!-- Header Controls -->
+    <div class="flex justify-between items-center no-print">
+        <a href="{% url 'tax:calculator' %}"
+            class="text-sm font-bold text-gray-500 hover:text-indigo-600 flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Planner
+        </a>
+        <button onclick="window.print()"
+            class="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-black transition-all">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print Report / PDF
+        </button>
+    </div>
+
+    <!-- Official Report Card -->
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden report-card">
+        <!-- Report Header -->
+        <div
+            class="p-8 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-4">
+                <img src="{% static 'img/logo.jpg' %}" alt="Altair Logo" class="w-16 h-16 rounded-2xl shadow-sm">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900 tracking-tight">ALTAIR <span
+                            class="text-indigo-600 font-normal">TAX AUDIT</span></h1>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Assessment Year: 2025-2026 | New Tax Regime</p>
+                </div>
+            </div>
+            <div class="text-center md:text-right">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Report Generated On</p>
+                <p class="text-sm font-bold text-gray-900">{% now "F j, Y, g:i a" %}</p>
+            </div>
+        </div>
+
+        <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-12">
+            <!-- Left Column: Source Info -->
+            <div class="md:col-span-2 space-y-10">
+                <!-- Section 1: Income Analysis -->
+                <section>
+                    <h3 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-6 h-1 bg-indigo-600 rounded-full"></span> 01. Income Sources & Deductions
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                        Description</th>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                        Occupation</th>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100 text-right">
+                                        Amount (INR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 font-bold">Gross Salary /
+                                        Professional Revenue</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50">
+                                        {{ results.occupation_type|title }}</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 text-right font-black">
+                                        INR {{ results.salary|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 font-bold">Other Income
+                                        (Interest, Rent, etc.)</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50">Personal</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 text-right font-black">
+                                        INR {{ results.other_income|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="bg-indigo-50/30">
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 font-bold text-indigo-800">
+                                        Standard Deduction (Section 16ia)</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 text-indigo-600">Applied</td>
+                                    <td
+                                        class="px-4 py-3 text-sm border-b border-gray-50 text-right font-black text-indigo-600">
+                                        -INR {{ results.std_deduction|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="bg-gray-900 text-white">
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 font-black">Net Taxable Income
+                                        (Aggregated)</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50">---</td>
+                                    <td
+                                        class="px-4 py-3 text-sm border-b border-gray-50 text-right font-black text-lg text-emerald-400">
+                                        INR {{ results.taxable_income|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Section 2: Asset Level Detail -->
+                <section>
+                    <h3 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span class="w-6 h-1 bg-indigo-600 rounded-full"></span> 02. Asset-Wise Capital Gains Report
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                        Holding Symbol</th>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                        Asset Classification</th>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100 text-right">
+                                        Market Value</th>
+                                    <th
+                                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 bg-gray-50 border-b border-gray-100 text-right">
+                                        Unrealized Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asset in asset_breakdown %}
+                                <tr>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 font-bold text-indigo-600">
+                                        {{ asset.symbol }}</td>
+                                    <td
+                                        class="px-4 py-3 text-sm border-b border-gray-50 text-[10px] uppercase font-bold text-gray-400">
+                                        {{ asset.type }}</td>
+                                    <td class="px-4 py-3 text-sm border-b border-gray-50 text-right text-gray-600">
+                                        INR {{ asset.market_value|floatformat:2 }}</td>
+                                    <td
+                                        class="px-4 py-3 text-sm border-b border-gray-50 text-right font-black {% if asset.profit >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                        {% if asset.profit >= 0 %}+{% endif %}INR {{ asset.profit|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4"
+                                        class="px-4 py-3 text-sm border-b border-gray-50 text-center py-8 text-gray-400 italic text-xs">
+                                        No assets detected for this evaluation cycle.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Section 3: Net Take-Home Assumption -->
+                <section class="bg-indigo-50/30 p-8 rounded-3xl border border-indigo-100">
+                    <h3
+                        class="text-xs font-black text-indigo-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <span class="w-6 h-1 bg-indigo-600 rounded-full"></span> 03. Net Portfolio Position (Liquidation
+                        Estimate)
+                    </h3>
+                    <div class="space-y-6">
+                        {% for asset in asset_breakdown %}
+                        <div class="p-6 bg-white rounded-2xl border border-indigo-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm font-black text-gray-900">{{ asset.symbol }}</p>
+                                    <p class="text-[9px] uppercase font-bold text-gray-400">{{ asset.type }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span
+                                        class="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-tighter">
+                                        Post-Tax Liquidation
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-4 border-t border-gray-50 pt-4">
+                                <div>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">Profit / Loss</p>
+                                    <p
+                                        class="text-xs font-bold {% if asset.profit >= 0 %}text-emerald-600{% else %}text-red-600{% endif %}">
+                                        {% if asset.profit >= 0 %}+{% endif %}INR {{ asset.profit|floatformat:2 }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">Tax Deduction</p>
+                                    <p class="text-xs font-bold text-gray-900">
+                                        -INR {{ asset.tax|floatformat:2 }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase mb-1">Net Position</p>
+                                    <p class="text-sm font-black text-indigo-600">
+                                        INR {{ asset.receivable|default:0|floatformat:2 }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-center text-gray-400 italic">No asset assumptions available.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div
+                        class="mt-8 p-4 bg-white rounded-2xl border border-indigo-100 text-[10px] text-indigo-600 leading-relaxed italic">
+                        <strong>Computational Logic:</strong> The "Net Position" represents the final estimated cash
+                        receivable if the asset is liquidated today.
+                        It is calculated as: <code>Market Value - (Capital Gains Tax + 4% Cess)</code>.
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Final Computation -->
+            <div class="space-y-6">
+                <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                    <h3 class="text-[10px] font-black text-gray-400 uppercase mb-6">Tax Computation Breakdown</h3>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Income Slab Tax (New Regime)</span>
+                            <span class="text-xs font-bold text-gray-900">INR {{ results.income_tax|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Equity STCG (20%)</span>
+                            <span class="text-xs font-bold text-gray-900">
+                                INR {{ results.equity_stcg_tax|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Total LTCG (12.5%*)</span>
+                            <span class="text-xs font-bold text-gray-900">INR {{ results.ltcg_tax|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-amber-600 font-bold">Crypto VDA Tax (30%)</span>
+                            <span class="text-xs font-bold text-amber-600">
+                                INR {{ results.crypto_tax|floatformat:2 }}</span>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200 flex justify-between">
+                            <span class="text-xs text-gray-400">Total Tax (Pre-Cess)</span>
+                            <span class="text-xs font-bold text-gray-400">INR {{ results.total_tax|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-400">Cess (4%)</span>
+                            <span class="text-xs font-bold text-gray-400">INR {{ results.cess|floatformat:2 }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-8 border-t-2 border-dashed border-gray-200">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Liability</p>
+                        <h2 class="text-3xl font-black text-gray-900">INR {{ results.total_tax|floatformat:2 }}</h2>
+                        <p class="text-[10px] text-indigo-600 font-bold mt-2 uppercase">Effective Tax Rate:
+                            {{ results.effective_rate|floatformat:2 }}%</p>
+                    </div>
+                </div>
+
+                <!-- Status Check -->
+                <div class="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-center gap-4">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-emerald-800 uppercase">Status</p>
+                        <p class="text-sm font-black text-emerald-900">Valid Policy 25-26</p>
+                    </div>
+                </div>
+
+                <!-- Optimization & Set-off explanation -->
+                <div class="p-6 bg-indigo-900 rounded-3xl text-white space-y-4">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-indigo-300">Optimization Insights</h3>
+                    
+                    {% if results.raw_stcg < 0 and results.raw_ltcg > 0 %}
+                    <div class="flex gap-3">
+                        <div class="w-1.5 bg-emerald-400 rounded-full"></div>
+                        <p class="text-[10px] leading-relaxed">
+                            <span class="font-bold text-emerald-400 italic">Set-off Applied:</span> 
+                            Your STCG loss of INR {{ results.abs_raw_stcg|floatformat:2 }} has been used to reduce your taxable LTCG, saving you ~12.5% in taxes on that amount.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if results.raw_stcg < 0 and results.total_stcg == 0 %}
+                    <div class="flex gap-3">
+                        <div class="w-1.5 bg-amber-400 rounded-full"></div>
+                        <p class="text-[10px] leading-relaxed">
+                            <span class="font-bold text-amber-400 italic">Locked Loss:</span> 
+                            Remaining STCG losses can be carried forward for up to 8 years to offset future gains.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if results.raw_ltcg < 0 %}
+                    <div class="flex gap-3">
+                        <div class="w-1.5 bg-rose-400 rounded-full"></div>
+                        <p class="text-[10px] leading-relaxed">
+                            <span class="font-bold text-rose-400 italic">LTCG Restriction:</span> 
+                            LTCG losses cannot offset STCG profit. These are locked for carry-forward only.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <p class="text-[9px] text-indigo-300 pt-2 border-t border-indigo-800 italic">
+                        All calculations follow the 2024 Union Budget tax set-off hierarchy.
+                    </p>
+                </div>
+
+                <div class="p-6 text-[10px] text-gray-400 leading-relaxed italic border border-gray-100 rounded-2xl">
+                    *This report is generated based on Union Budget 2024-25 (New Tax Regime) and assumes your portfolio
+                    classification is accurate. Please double check for final tax filing.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-8 bg-gray-900 text-white flex justify-between items-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest">ALTAIR COMMAND CENTER — SECURE TAX AUDIT</p>
+            <div class="flex gap-4">
+                <i data-lucide="award" class="w-5 h-5 opacity-50"></i>
+                <i data-lucide="lock" class="w-5 h-5 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Refresh icons after render
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

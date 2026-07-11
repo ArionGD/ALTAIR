@@ -97,21 +97,6 @@ async def get_ticker_forensics(ticker_symbol: str):
         
     return ticker_data.to_dict(orient="records")[0]
 
-@router.get("/astro-pulse")
-async def get_astro_pulse():
-    """Returns the countdown and fracture risk for the April 19, 2026 Reset."""
-    target_date = pd.to_datetime("2026-04-19")
-    current_date = pd.to_datetime("now")
-    days_to_reset = (target_date - current_date).days
-    
-    return {
-        "event": "SMI 9.4 Sovereign Reset",
-        "date": "2026-04-19",
-        "days_remaining": days_to_reset,
-        "fracture_risk": "CRITICAL" if days_to_reset < 30 else "ELEVATED",
-        "primary_signals": ["China Bond Exit", "Oil $150 Threshold", "Saturn-Rahu Exact"]
-    }
-
 @router.post("/audit")
 async def trigger_audit(background_tasks: BackgroundTasks):
     """Triggers the full Forensic Audit Pipeline as a background task."""

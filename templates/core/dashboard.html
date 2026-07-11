@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en" x-data="dashboard()" x-init="init()" :class="{ dark: isDark }">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" type="image/jpeg" href="/static/image/altair.jpg" />
+	<title>ALTAIR — Dashboard</title>
+	<script>
+		// Set the theme before first paint (avoids a flash of the wrong theme).
+		// Alpine's own isDark state (initialized the same way, in dashboard())
+		// takes over for reactive toggling once it loads.
+		(function () {
+			if (localStorage.getItem("altair-theme") === "light") {
+				document.documentElement.classList.remove("dark");
+			} else {
+				document.documentElement.classList.add("dark");
+			}
+		})();
+	</script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+	<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			darkMode: "class",
+			theme: { extend: { fontFamily: { sans: ["Inter", "sans-serif"] } } },
+		};
+	</script>
+	<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+	<style>
+		[x-cloak] { display: none !important; }
+		body { font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+		*::-webkit-scrollbar { width: 10px !important; height: 10px !important; }
+		*::-webkit-scrollbar-track { background: #0f172a !important; }
+		*::-webkit-scrollbar-thumb { background: #ffffff !important; border-radius: 100px !important; border: 3px solid #0f172a !important; }
+		*::-webkit-scrollbar-thumb:hover { background: #e2e8f0 !important; }
+		html, body, main { scrollbar-width: thin; scrollbar-color: #ffffff #0f172a; }
+	</style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex overflow-hidden">
+
+	{% include "core/_sidebar.html" %}
+
+	<div class="flex-1 flex flex-col min-w-0">
+		{% include "core/_header.html" %}
+
+		<main class="flex-1 overflow-y-auto p-6">
+			<p x-show="loadError" x-text="loadError" class="text-rose-600 dark:text-rose-400 text-sm mb-4"></p>
+			<p x-show="auditMessage" x-text="auditMessage" class="text-gray-500 dark:text-slate-500 text-xs mb-4"></p>
+
+			<template x-if="activeTab === 'overview'">
+				{% include "core/_overview.html" %}
+			</template>
+
+			<template x-if="activeTab === 'strikes'">
+				{% include "core/_strikes.html" %}
+			</template>
+
+			<template x-if="activeTab === 'archive'">
+				{% include "core/_archive.html" %}
+			</template>
+
+			<template x-if="activeTab === 'guide'">
+				{% include "core/_guide.html" %}
+			</template>
+		</main>
+	</div>
+
+	<!-- Detail slide-over -->
+	<div
+		x-cloak
+		x-show="detailTicker"
+		x-transition
+		class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 p-6 overflow-y-auto z-40 shadow-2xl"
+	>
+		<button @click="closeDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-white text-xl leading-none">&times;</button>
+		<h3 class="font-black text-lg mb-4 text-gray-900 dark:text-white" x-text="detailTicker"></h3>
+		<template x-for="[k, v] in detailEntries()" :key="k">
+			<div class="flex justify-between gap-4 py-2 border-b border-gray-100 dark:border-slate-800 text-sm">
+				<span class="text-gray-500 dark:text-slate-500" x-text="k"></span>
+				<span class="text-right break-words text-gray-900 dark:text-white" x-text="v"></span>
+			</div>
+		</template>
+		<p x-show="detailFallback" class="text-gray-500 dark:text-slate-500 text-xs mt-3">
+			Deep forensic breakdown (/forensic-ticker) unavailable — showing strike-list row only. See project README, "Known backend issue".
+		</p>
+	</div>
+
+	<script>
+		function dashboard() {
+			return {
+				isDark: localStorage.getItem("altair-theme") !== "light",
+				health: { online: false, engine: "", data_ready: false },
+				market: "",
+				rows: [],
+				topRows: [],
+				loadError: "",
+				search: "",
+				sortKey: "astra_strike_score",
+				sortDesc: true,
+				activeTab: "overview",
+				auditStatus: { in_progress: false, last_run: null },
+				auditMessage: "",
+				auditPollHandle: null,
+				detailTicker: null,
+				detail: {},
+				detailFallback: false,
+				charts: { top: null, sector: null },
+				archiveFiles: [],
+				archiveFilesLoaded: false,
+				archiveFilename: "",
+				archiveColumns: [],
+				archiveRows: [],
+				archiveError: "",
+				columns: [
+					{ key: "ticker", label: "Ticker" },
+					{ key: "market", label: "Market" },
+					{ key: "sector", label: "Sector" },
+					{ key: "pe_ratio", label: "P/E" },
+					{ key: "debt_to_equity", label: "Debt/Equity" },
+					{ key: "revenue_growth", label: "Rev Growth" },
+					{ key: "bailout_probability", label: "Bailout %" },
+					{ key: "astra_strike_score", label: "Strike Score" },
+				],
+
+				async init() {
+					await this.checkHealth();
+					await this.loadData();
+					await this.pollAudit();
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				refreshIcons() {
+					if (typeof lucide !== "undefined") lucide.createIcons();
+				},
+
+				tabTitle() {
+					return {
+						overview: "Overview",
+						strikes: "Strike List",
+						archive: "Past Analysis",
+						guide: "Guide",
+					}[this.activeTab] ?? "Dashboard";
+				},
+
+				toggleTheme() {
+					this.isDark = !this.isDark;
+					localStorage.setItem("altair-theme", this.isDark ? "dark" : "light");
+					// Chart colors are baked in at creation time — re-render with the
+					// new palette. this.charts.X is null unless the Overview tab is
+					// currently mounted, so this is a no-op on other tabs.
+					this.$nextTick(() => {
+						if (this.charts.top) this.renderTopChart(this.charts.top.canvas);
+						if (this.charts.sector) this.renderSectorChart(this.charts.sector.canvas);
+					});
+				},
+
+				fmt(n, digits = 2) {
+					return typeof n === "number" && !Number.isNaN(n) ? n.toFixed(digits) : "—";
+				},
+
+				fmtArchiveValue(v) {
+					if (v === null || v === undefined || v === "") return "—";
+					if (typeof v === "number") {
+						return Number.isInteger(v) ? v : Math.round(v * 10000) / 10000;
+					}
+					return v;
+				},
+
+				healthLabel() {
+					if (!this.health.online) return "backend unreachable";
+					return `${this.health.engine} · ${this.health.data_ready ? "data ready" : "no strike data yet"}`;
+				},
+
+				async checkHealth() {
+					try {
+						const res = await fetch("/api/v1/health");
+						if (!res.ok) throw new Error();
+						const data = await res.json();
+						this.health = { online: true, ...data };
+					} catch {
+						this.health = { online: false, engine: "", data_ready: false };
+					}
+				},
+
+				async loadData() {
+					const q = this.market ? `?market=${encodeURIComponent(this.market)}` : "";
+					try {
+						const [listRes, topRes] = await Promise.all([
+							fetch(`/api/v1/strike-list${q}`),
+							fetch(`/api/v1/top-targets/5${q}`),
+						]);
+						if (!listRes.ok) throw new Error(`${listRes.status} ${listRes.statusText}`);
+						if (!topRes.ok) throw new Error(`${topRes.status} ${topRes.statusText}`);
+						this.rows = await listRes.json();
+						this.topRows = await topRes.json();
+						this.loadError = "";
+					} catch (err) {
+						this.rows = [];
+						this.topRows = [];
+						this.loadError = `Could not load strike data: ${err.message}`;
+					}
+					// Chart re-rendering is handled by the $watch('rows', ...) set up
+					// in each canvas's x-init (see core/_overview.html) — not here —
+					// so there's exactly one trigger per data change, not two racing.
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				// --- KPI stat tiles ---
+				totalTickers() {
+					return this.rows.length;
+				},
+				avgStrikeScore() {
+					if (this.rows.length === 0) return "—";
+					const avg = this.rows.reduce((sum, r) => sum + (r.astra_strike_score || 0), 0) / this.rows.length;
+					return avg.toFixed(1);
+				},
+				highRiskCount() {
+					return this.rows.filter((r) => (r.astra_strike_score || 0) >= 80).length;
+				},
+
+				// --- Charts (single-hue magnitude bars; table below carries exact values) ---
+				chartColors() {
+					return this.isDark
+						? { grid: "#1e293b", ticks: "#94a3b8", labels: "#e2e8f0", bar: "#f87171" }
+						: { grid: "#e2e8f0", ticks: "#64748b", labels: "#1e293b", bar: "#dc2626" };
+				},
+
+				renderTopChart(canvas) {
+					if (this.charts.top) this.charts.top.destroy();
+					const c = this.chartColors();
+					const top10 = [...this.rows].sort((a, b) => b.astra_strike_score - a.astra_strike_score).slice(0, 10);
+					this.charts.top = new Chart(canvas, {
+						type: "bar",
+						data: {
+							labels: top10.map((r) => r.ticker),
+							datasets: [
+								{
+									data: top10.map((r) => r.astra_strike_score),
+									backgroundColor: c.bar,
+									borderRadius: 4,
+									maxBarThickness: 20,
+								},
+							],
+						},
+						options: {
+							indexAxis: "y",
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							plugins: {
+								legend: { display: false },
+								tooltip: { callbacks: { label: (ctx) => ` Strike score: ${ctx.parsed.x.toFixed(2)}` } },
+							},
+							scales: {
+								x: { grid: { color: c.grid }, ticks: { color: c.ticks }, beginAtZero: true },
+								y: { grid: { display: false }, ticks: { color: c.labels } },
+							},
+						},
+					});
+				},
+
+				renderSectorChart(canvas) {
+					if (this.charts.sector) this.charts.sector.destroy();
+					const c = this.chartColors();
+					const bySector = {};
+					for (const r of this.rows) {
+						const key = r.sector || "Unknown";
+						if (!bySector[key]) bySector[key] = [];
+						bySector[key].push(r.astra_strike_score || 0);
+					}
+					const sectors = Object.keys(bySector).sort(
+						(a, b) => avg(bySector[b]) - avg(bySector[a])
+					);
+					function avg(arr) {
+						return arr.reduce((s, v) => s + v, 0) / arr.length;
+					}
+					this.charts.sector = new Chart(canvas, {
+						type: "bar",
+						data: {
+							labels: sectors.map((s) => s.replace(/_/g, " ")),
+							datasets: [
+								{
+									data: sectors.map((s) => avg(bySector[s])),
+									backgroundColor: c.bar,
+									borderRadius: 4,
+									maxBarThickness: 20,
+								},
+							],
+						},
+						options: {
+							indexAxis: "y",
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							plugins: {
+								legend: { display: false },
+								tooltip: { callbacks: { label: (ctx) => ` Avg strike score: ${ctx.parsed.x.toFixed(2)}` } },
+							},
+							scales: {
+								x: { grid: { color: c.grid }, ticks: { color: c.ticks }, beginAtZero: true },
+								y: { grid: { display: false }, ticks: { color: c.labels } },
+							},
+						},
+					});
+				},
+
+				sortedRows() {
+					const key = this.sortKey;
+					const desc = this.sortDesc;
+					const needle = this.search.trim().toLowerCase();
+					const base = needle
+						? this.rows.filter((r) => (r.ticker ?? "").toLowerCase().includes(needle))
+						: this.rows;
+					return [...base].sort((a, b) => {
+						const av = a[key];
+						const bv = b[key];
+						if (typeof av === "number" && typeof bv === "number") {
+							return desc ? bv - av : av - bv;
+						}
+						return desc ? String(bv).localeCompare(String(av)) : String(av).localeCompare(String(bv));
+					});
+				},
+
+				setTab(tab) {
+					if (this.activeTab === "overview" && tab !== "overview") {
+						// Destroy chart instances before Alpine's x-if removes their
+						// canvases from the DOM, or Chart.js throws trying to touch
+						// the now-detached element on its next internal tick.
+						this.destroyCharts();
+					}
+					this.activeTab = tab;
+					if (tab === "archive" && !this.archiveFilesLoaded) {
+						this.loadArchiveList();
+					}
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				destroyCharts() {
+					if (this.charts.top) {
+						this.charts.top.destroy();
+						this.charts.top = null;
+					}
+					if (this.charts.sector) {
+						this.charts.sector.destroy();
+						this.charts.sector = null;
+					}
+				},
+
+				async loadArchiveList() {
+					try {
+						const res = await fetch("/api/v1/archive");
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.archiveFiles = await res.json();
+						this.archiveFilesLoaded = true;
+						if (this.archiveFiles.length > 0) {
+							await this.loadArchiveFile(this.archiveFiles[0]);
+						}
+					} catch (err) {
+						this.archiveError = `Could not load archive list: ${err.message}`;
+					}
+				},
+
+				async loadArchiveFile(filename) {
+					this.archiveFilename = filename;
+					this.archiveError = "";
+					try {
+						const res = await fetch(`/api/v1/archive/${encodeURIComponent(filename)}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						this.archiveColumns = data.columns;
+						this.archiveRows = data.rows;
+					} catch (err) {
+						this.archiveColumns = [];
+						this.archiveRows = [];
+						this.archiveError = `Could not load ${filename}: ${err.message}`;
+					}
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				setSort(key) {
+					if (this.sortKey === key) {
+						this.sortDesc = !this.sortDesc;
+					} else {
+						this.sortKey = key;
+						this.sortDesc = true;
+					}
+				},
+
+				async runAudit() {
+					this.auditStatus.in_progress = true;
+					try {
+						const res = await fetch("/api/v1/audit", { method: "POST" });
+						const data = await res.json();
+						this.auditMessage = data.message ?? "Audit triggered.";
+					} catch {
+						this.auditMessage = "Failed to trigger audit.";
+					}
+					if (!this.auditPollHandle) {
+						this.auditPollHandle = setInterval(() => this.pollAudit(), 4000);
+					}
+				},
+
+				async pollAudit() {
+					try {
+						const res = await fetch("/api/v1/status");
+						this.auditStatus = await res.json();
+						this.auditMessage = this.auditStatus.in_progress
+							? "Audit running in background…"
+							: this.auditStatus.last_run
+								? `Last run: ${this.auditStatus.last_run}`
+								: "No audit run yet.";
+						if (!this.auditStatus.in_progress && this.auditPollHandle) {
+							clearInterval(this.auditPollHandle);
+							this.auditPollHandle = null;
+							await this.loadData();
+							await this.checkHealth();
+						}
+					} catch {
+						// backend unreachable mid-poll; leave status as-is and try again next tick
+					}
+				},
+
+				async openDetail(ticker) {
+					this.detailTicker = ticker;
+					const row = this.rows.find((r) => r.ticker === ticker) ?? {};
+					let forensic = null;
+					try {
+						const res = await fetch(`/api/v1/forensic-ticker/${encodeURIComponent(ticker)}`);
+						if (res.ok) forensic = await res.json();
+					} catch {
+						forensic = null;
+					}
+					this.detail = forensic ?? row;
+					this.detailFallback = !forensic;
+				},
+
+				detailEntries() {
+					return Object.entries(this.detail).filter(([k]) => k !== "ticker");
+				},
+
+				closeDetail() {
+					this.detailTicker = null;
+				},
+			};
+		}
+	</script>
+</body>
+</html>

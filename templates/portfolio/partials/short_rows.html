@@ -1,0 +1,53 @@
+<!-- SHORTS TABLE PARTIAL -->
+{% if short_holdings %}
+    {% for holding in short_holdings %}
+    <tr class="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition-colors group border-b border-gray-100 dark:border-slate-800" id="holding-{{ holding.pk }}">
+        <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-slate-950 flex items-center justify-center font-bold text-rose-600 dark:text-rose-400 uppercase border border-rose-100 dark:border-rose-900/30 shadow-sm">
+                    {{ holding.symbol.0 }}
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-gray-900 dark:text-white uppercase">{{ holding.symbol }}</p>
+                    <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold">{{ holding.name }}</p>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ holding.quantity|floatformat:2 }}</p>
+        </td>
+        <td class="px-6 py-4 font-mono text-sm text-gray-600 dark:text-slate-400">₹{{ holding.purchase_price|floatformat:2 }}</td>
+        <td class="px-6 py-4 font-mono text-sm text-gray-900 dark:text-white" 
+            hx-get="{% url 'portfolio:get_live_price_json' holding.pk %}" 
+            hx-trigger="load delay:3s" 
+            hx-swap="innerHTML">
+            <span class="animate-pulse text-gray-300 dark:text-slate-700 font-bold tracking-widest">---</span>
+        </td>
+        <td class="px-6 py-4">
+            <div class="flex flex-col" id="pl-{{ holding.pk }}">
+                <p class="text-sm font-bold {% if holding.profit_loss >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                    {% if holding.profit_loss >= 0 %}+{% endif %}₹{{ holding.profit_loss|floatformat:2}}
+                </p>
+                <p class="text-[11px] font-semibold {% if holding.profit_loss >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                    {% if holding.profit_loss >= 0 %}+{% endif %}{{ holding.profit_loss_pct|floatformat:2 }}%
+                </p>
+            </div>
+        </td>
+        <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end gap-1">
+                <a href="{% url 'portfolio:book_profit' holding.pk %}" title="Close Short (Buy Back)"
+                    class="p-2 text-gray-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-all">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </a>
+                <button hx-delete="{% url 'portfolio:delete_asset' holding.pk %}" 
+                    hx-target="#holding-{{ holding.pk }}" 
+                    hx-swap="outerHTML"
+                    hx-confirm="Exit this position?"
+                    class="p-2 text-gray-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+{% endif %}

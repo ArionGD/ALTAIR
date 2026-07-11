@@ -1,0 +1,127 @@
+
+<!-- FULL WIDTH: Multi-Line Asset Growth Terminal Style -->
+<div id="growth-terminal-container" class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h4 class="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-5 h-5 text-indigo-600"></i> Asset Growth Terminal
+            </h4>
+            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1 font-medium">Wealth projection trajectory in INR across individual holdings.</p>
+        </div>
+        <div class="flex items-center gap-3 border-l-2 border-gray-100 dark:border-slate-800 pl-4">
+            <div class="bg-gray-50 dark:bg-slate-800 p-1 rounded-xl flex gap-1">
+                <button hx-get="{% url 'analytics:overview' %}?timeline=month" hx-target="#growth-terminal-container" hx-swap="outerHTML" hx-push-url="true"
+                    class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all {% if timeline == 'month' or not timeline %}bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-slate-200 dark:shadow-none{% else %}text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300{% endif %}">MONTH</button>
+                <button hx-get="{% url 'analytics:overview' %}?timeline=year" hx-target="#growth-terminal-container" hx-swap="outerHTML" hx-push-url="true"
+                    class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all {% if timeline == 'year' %}bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-slate-200 dark:shadow-none{% else %}text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300{% endif %}">YEAR</button>
+            </div>
+        </div>
+    </div>
+    <div class="h-[450px]">
+        <canvas id="growthTrendChart"></canvas>
+    </div>
+
+    <!-- Pass block-specific data -->
+    {{ chart_labels|json_script:"chart-labels-partial" }}
+    {{ series_data|json_script:"series-data-partial" }}
+
+    <script>
+        (function() {
+            // Re-initialize Lucide icons in newly swapped fragment
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            const getPartialJson = (id) => JSON.parse(document.getElementById(id).textContent);
+            const seriesData = getPartialJson('series-data-partial');
+            const chartLabels = getPartialJson('chart-labels-partial');
+            
+            const isDark = () => document.documentElement.classList.contains('dark');
+            const getThemeColor = (light, dark) => isDark() ? dark : light;
+            const palette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#d946ef', '#8b5cf6', '#06b6d4', '#f43f5e', '#14b8a6', '#f97316'];
+            const fmtCurr = (val) => '₹' + Number(val).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            
+            const d = {
+                grid: getThemeColor('#f1f5f9', '#1e293b'),
+                text: getThemeColor('#94a3b8', '#64748b'),
+                border: getThemeColor('#ffffff', '#0f172a')
+            };
+
+            const growthDatasets = seriesData.map((series, idx) => ({
+                label: series.symbol,
+                data: series.data,
+                borderColor: palette[idx % palette.length],
+                backgroundColor: palette[idx % palette.length] + '1A',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                pointBackgroundColor: palette[idx % palette.length],
+                pointBorderColor: d.border,
+                pointBorderWidth: 1.5,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.3
+            }));
+
+            // Crucially store in global chartInstances if it exists to allow theme toggling to work later
+            if (window.chartInstances) {
+                if (window.chartInstances.growthTrendChart) window.chartInstances.growthTrendChart.destroy();
+            } else {
+                window.chartInstances = {};
+            }
+
+            window.chartInstances.growthTrendChart = new Chart(document.getElementById('growthTrendChart'), {
+                type: 'line',
+                data: { labels: chartLabels, datasets: growthDatasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            grid: { color: d.grid, drawBorder: false, borderDash: [5, 5] },
+                            ticks: { font: { size: 10, weight: '700' }, color: d.text, callback: (v) => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '800' }, color: d.text }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            enabled: false,
+                            external: function(context) {
+                                let tooltipEl = document.getElementById('chartjs-tooltip');
+                                if (!tooltipEl) {
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'chartjs-tooltip';
+                                    tooltipEl.style.cssText = `border-radius: 12px; color: white; padding: 16px; opacity: 0; pointer-events: none; position: absolute; transform: translate(-50%, -100%); transition: all .1s ease; min-width: 140px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); z-index: 1000;`;
+                                    document.body.appendChild(tooltipEl);
+                                }
+                                tooltipEl.style.background = isDark() ? 'rgba(15, 23, 42, 0.95)' : 'rgba(33, 37, 41, 0.95)';
+                                tooltipEl.style.border = isDark() ? '1px solid rgba(51, 65, 85, 0.5)' : 'transparent';
+                                const tooltipModel = context.tooltip;
+                                if (tooltipModel.opacity === 0) { tooltipEl.style.opacity = 0; return; }
+                                if (tooltipModel.body) {
+                                    const titleLines = tooltipModel.title || [];
+                                    const bodyLines = tooltipModel.body.map(b => b.lines);
+                                    let innerHtml = '<div style="font-weight: 800; font-size: 14px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">' + titleLines[0] + '</div>';
+                                    bodyLines.forEach((body, i) => {
+                                        const colors = tooltipModel.labelColors[i];
+                                        const parts = body[0].split(':');
+                                        const val = parseFloat(parts[1]);
+                                        innerHtml += `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;"><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 12px; height: 12px; border-radius: 3px; background: ${colors.borderColor}"></div><span style="font-size: 11px; font-weight: 700; opacity: 0.8;">${parts[0]}</span></div><span style="font-size: 12px; font-weight: 900;">${fmtCurr(val)}</span></div>`;
+                                    });
+                                    tooltipEl.innerHTML = innerHtml;
+                                }
+                                const position = context.chart.canvas.getBoundingClientRect();
+                                tooltipEl.style.opacity = 1;
+                                tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY - 15 + 'px';
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+</div>

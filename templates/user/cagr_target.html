@@ -1,0 +1,144 @@
+{% extends "user/user_base.html" %}
+
+{% block title %}Altair — CAGR Target Oracle{% endblock %}
+{% block page_title %}Required Rate Target Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="{
+    principal: 100000,
+    sip: 10000,
+    target: 10000000,
+    years: 10,
+    get requiredRate() {
+        let p = parseFloat(this.principal) || 0;
+        let pmt = parseFloat(this.sip) || 0;
+        let fv = parseFloat(this.target) || 0;
+        let y = parseFloat(this.years) || 1;
+        let months = y * 12;
+
+        if (p + (pmt * months) >= fv) return '0.00'; 
+
+        let low = 0.0;
+        let high = 1.0; 
+        let guess = 0.0;
+        
+        for (let i = 0; i < 50; i++) {
+            guess = (low + high) / 2;
+            let computedFv = p * Math.pow(1 + guess, months) + pmt * (1 + guess) * ((Math.pow(1 + guess, months) - 1) / guess);
+            
+            if (computedFv > fv) {
+                high = guess;
+            } else {
+                low = guess;
+            }
+        }
+        
+        let yearlyRate = guess * 12 * 100;
+        return yearlyRate.toFixed(2);
+    }
+}">
+
+    <!-- Header & Back Button -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <a href="{% url 'user:dashboard' %}" class="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-emerald-600 transition-all uppercase tracking-widest mb-2">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Dashboard
+            </a>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">CAGR Target Oracle</h1>
+            <p class="text-sm text-gray-400 mt-1">Audit the exact required growth rate for your wealth goals.</p>
+        </div>
+        <div class="p-4 bg-emerald-600 rounded-2xl shadow-lg text-right">
+            <p class="text-[10px] text-emerald-200 font-bold uppercase tracking-widest mb-1">Required Annual CAGR</p>
+            <p class="text-4xl font-black text-white font-syncopate" x-text="requiredRate + '%'"></p>
+        </div>
+    </div>
+
+    <!-- Input Hub -->
+    <div class="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-8 pb-4 border-b border-gray-50 flex items-center gap-2">
+            <i data-lucide="crosshair" class="w-5 h-5 text-emerald-500"></i> Variable Target Designation
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Target Wealth -->
+            <div class="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div class="flex justify-between mb-2">
+                    <label class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Final Target Wealth</label>
+                    <span class="text-sm font-bold text-emerald-700" x-text="'₹' + parseFloat(target).toLocaleString('en-IN')"></span>
+                </div>
+                <input type="range" min="100000" max="100000000" step="100000" x-model="target"
+                    class="w-full h-1.5 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+                <div class="mt-4 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-emerald-100">
+                    <span class="text-gray-400 font-bold text-sm">₹</span>
+                    <input type="number" x-model="target" class="w-full bg-transparent border-none p-0 text-sm font-black text-emerald-800 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Time Horizon -->
+            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="flex justify-between mb-2">
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Time Horizon (Years)</label>
+                    <span class="text-sm font-bold text-gray-700" x-text="years + ' Years'"></span>
+                </div>
+                <input type="range" min="1" max="50" step="1" x-model="years"
+                    class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600">
+                <div class="mt-4 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200">
+                    <span class="text-gray-400 font-bold text-sm">Y</span>
+                    <input type="number" x-model="years" class="w-full bg-transparent border-none p-0 text-sm font-black text-gray-800 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Principal -->
+            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="flex justify-between mb-2">
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Initial Capital</label>
+                    <span class="text-sm font-bold text-gray-700" x-text="'₹' + parseFloat(principal).toLocaleString('en-IN')"></span>
+                </div>
+                <input type="range" min="0" max="10000000" step="50000" x-model="principal"
+                    class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600">
+                <div class="mt-4 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200">
+                    <span class="text-gray-400 font-bold text-sm">₹</span>
+                    <input type="number" x-model="principal" class="w-full bg-transparent border-none p-0 text-sm font-black text-gray-800 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Monthly SIP -->
+            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="flex justify-between mb-2">
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Monthly Portfolio SIP</label>
+                    <span class="text-sm font-bold text-gray-700" x-text="'₹' + parseFloat(sip).toLocaleString('en-IN')"></span>
+                </div>
+                <input type="range" min="0" max="500000" step="5000" x-model="sip"
+                    class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600">
+                <div class="mt-4 flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200">
+                    <span class="text-gray-400 font-bold text-sm">₹</span>
+                    <input type="number" x-model="sip" class="w-full bg-transparent border-none p-0 text-sm font-black text-gray-800 focus:outline-none">
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 p-6 bg-slate-900 rounded-2xl text-white">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center">
+                    <i data-lucide="crosshair" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-widest">Target Acquisition Mode</span>
+            </div>
+            <p class="text-sm text-gray-400 leading-relaxed max-w-2xl mt-3">
+                To reach <span class="text-emerald-400 font-black" x-text="'₹' + parseFloat(target).toLocaleString('en-IN')"></span> in <span class="text-white font-bold" x-text="years + ' years'"></span> 
+                with your current capital of <span class="text-white font-bold" x-text="'₹' + parseFloat(principal).toLocaleString('en-IN')"></span> and SIP of <span class="text-white font-bold" x-text="'₹' + parseFloat(sip).toLocaleString('en-IN')"></span>, 
+                you must generate a minimum annualized return of <span class="text-emerald-400 font-black text-lg" x-text="requiredRate + '%'"></span> consistently.
+            </p>
+            
+            <template x-if="parseFloat(requiredRate) > 25">
+                <div class="mt-4 p-3 bg-rose-500/20 border border-rose-500/30 rounded-lg flex items-start gap-3 text-rose-300 text-xs font-medium">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 shrink-0 text-rose-400"></i>
+                    <div>
+                        <strong>Aggressive Rate Detected:</strong> Generating > 25% CAGR usually requires high-risk derivatives or concentrated equity plays. Consider increasing your Initial Capital or SIP time horizon to lower the required risk threshold.
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{% endblock %}

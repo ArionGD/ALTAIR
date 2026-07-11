@@ -1,0 +1,56 @@
+<div>
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300">
+		<div class="flex items-center gap-3 mb-3">
+			<div class="w-8 h-8 bg-violet-50 dark:bg-violet-500/10 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-400">
+				<i data-lucide="archive" class="w-4 h-4"></i>
+			</div>
+			<span class="text-[15px] font-bold text-gray-900 dark:text-white">Past Analysis Archive</span>
+		</div>
+		<p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
+			One-off analysis runs saved as CSVs under <code class="text-gray-700 dark:text-slate-300">md/</code> —
+			simulations, manual scans, and earlier strike-list versions. These are
+			historical snapshots, not live data, and each file has its own columns
+			(different scripts produced them at different times).
+		</p>
+		<div class="flex flex-wrap items-center gap-3">
+			<label class="text-xs uppercase tracking-wide text-gray-500 dark:text-slate-500" for="archive-file">File</label>
+			<select
+				id="archive-file"
+				x-model="archiveFilename"
+				@change="loadArchiveFile(archiveFilename)"
+				class="bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-1.5 text-gray-900 dark:text-white"
+			>
+				<template x-for="f in archiveFiles" :key="f">
+					<option :value="f" x-text="f"></option>
+				</template>
+			</select>
+		</div>
+	</section>
+
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+		<p x-show="archiveError" x-text="archiveError" class="text-rose-600 dark:text-rose-400 text-sm"></p>
+		<p x-show="!archiveError && archiveFiles.length === 0" class="text-gray-500 dark:text-slate-500 text-sm">
+			No archived files found under md/.
+		</p>
+		<div class="overflow-x-auto" x-show="!archiveError && archiveRows.length > 0">
+			<table class="w-full text-sm">
+				<thead>
+					<tr class="border-b border-gray-100 dark:border-slate-800">
+						<template x-for="col in archiveColumns" :key="col">
+							<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4 whitespace-nowrap" x-text="col"></th>
+						</template>
+					</tr>
+				</thead>
+				<tbody>
+					<template x-for="(row, idx) in archiveRows" :key="idx">
+						<tr class="border-t border-gray-50 dark:border-slate-800/50 text-gray-900 dark:text-white">
+							<template x-for="col in archiveColumns" :key="col">
+								<td class="py-3 pr-4 whitespace-nowrap text-gray-600 dark:text-slate-400" x-text="fmtArchiveValue(row[col])"></td>
+							</template>
+						</tr>
+					</template>
+				</tbody>
+			</table>
+		</div>
+	</section>
+</div>

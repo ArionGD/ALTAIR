@@ -1,0 +1,96 @@
+<div class="max-w-3xl">
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 mb-5 transition-all duration-300">
+		<h3 class="font-semibold text-lg mb-2 text-gray-900 dark:text-white">What is ALTAIR?</h3>
+		<p class="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
+			ALTAIR scores public companies on financial "fragility" — how likely they are
+			to be overvalued, over-leveraged, or unprotected if the market turns. Every
+			number on this dashboard comes straight from the company's own financials and
+			market data — there's no prediction of <em>when</em> anything will happen, only
+			an assessment of <em>how weak</em> a given company looks right now. Higher
+			scores = more fragile. This is a research tool, not investment advice.
+		</p>
+	</section>
+
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 mb-5 transition-all duration-300">
+		<h3 class="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Reading the Strike List table</h3>
+		<dl class="space-y-4 text-sm">
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Ticker</dt>
+				<dd class="text-gray-500 dark:text-slate-400">The stock's trading symbol. A <code class="text-gray-700 dark:text-slate-300">.NS</code> suffix means it trades on India's NSE (e.g. <code class="text-gray-700 dark:text-slate-300">NYKAA.NS</code>); no suffix usually means US-listed (e.g. <code class="text-gray-700 dark:text-slate-300">AAPL</code>).</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Market / Sector</dt>
+				<dd class="text-gray-500 dark:text-slate-400">Which country the stock trades in (US or IND), and which industry group it belongs to (Auto, BFSI/banking, IT Service, Energy, etc.).</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">P/E Ratio <span class="text-gray-400 dark:text-slate-500 font-normal">(Price-to-Earnings)</span></dt>
+				<dd class="text-gray-500 dark:text-slate-400">Roughly: how many years of current profit it would take to "earn back" the stock's price. A P/E of 500 means investors are paying 500&times; a year's profit — very expensive relative to a typical mature company (usually 15&ndash;25). High P/E without strong growth behind it is a classic sign of a "hyped" or overvalued stock.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Debt/Equity</dt>
+				<dd class="text-gray-500 dark:text-slate-400">How much the company owes in debt compared to what its shareholders actually own. High debt/equity means the company leans heavily on borrowed money — risky because interest has to be paid whether or not profits hold up.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Rev Growth <span class="text-gray-400 dark:text-slate-500 font-normal">(Revenue Growth)</span></dt>
+				<dd class="text-gray-500 dark:text-slate-400">How much sales grew (or shrank) year over year. Negative growth combined with high debt or a high P/E is a red flag — the business is shrinking while still priced for growth.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Bailout %</dt>
+				<dd class="text-gray-500 dark:text-slate-400">A rough 0&ndash;100 estimate of how likely a government or central bank would step in to rescue this company if it got into serious trouble. Large banks, national energy companies, and defense contractors score high (too important to fail); small consumer-tech startups score near 0 (no safety net).</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-rose-600 dark:text-rose-400">Strike Score</dt>
+				<dd class="text-gray-500 dark:text-slate-400">ALTAIR's overall fragility score, combining the metrics above into one number. <strong class="text-gray-700 dark:text-slate-200">This is the main number to look at first</strong> — higher means more fragile (more "air" in the valuation, less protection if things go wrong); lower means more resilient or protected.</dd>
+			</div>
+		</dl>
+	</section>
+
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 mb-5 transition-all duration-300">
+		<h3 class="font-semibold text-lg mb-2 text-gray-900 dark:text-white">Under the hood: the forensic metrics</h3>
+		<p class="text-sm text-gray-500 dark:text-slate-400 mb-4">
+			These feed the scoring engine and may appear in a ticker's detail panel.
+			Each is a well-known forensic-accounting technique, not something ALTAIR invented.
+		</p>
+		<dl class="space-y-4 text-sm">
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Altman Z-Score</dt>
+				<dd class="text-gray-500 dark:text-slate-400">A classic bankruptcy-risk formula. Below 1.8 = "Distress Zone" (high bankruptcy risk). Above 3.0 = safe. Between the two is a grey zone.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Beneish M-Score</dt>
+				<dd class="text-gray-500 dark:text-slate-400">Flags possible earnings manipulation. A score above -1.78 suggests the company's reported numbers might be too good to be true.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Piotroski F-Score</dt>
+				<dd class="text-gray-500 dark:text-slate-400">A 0&ndash;9 checklist of financial health signals (profitability, leverage, efficiency trends). 8&ndash;9 = very strong ("Iron Fortress"). 0&ndash;2 = weak.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Sloan Ratio</dt>
+				<dd class="text-gray-500 dark:text-slate-400">Checks whether reported profit is backed by real cash or is mostly accounting paper-profit. Above 0.10 is a warning sign that earnings quality is poor.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">ROIC <span class="text-gray-400 dark:text-slate-500 font-normal">(Return on Invested Capital)</span></dt>
+				<dd class="text-gray-500 dark:text-slate-400">How much real profit a company generates for every dollar it invests. Below 10% often means the company is effectively burning value even while it looks like it's "growing."</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Debt/EBITDA <span class="text-gray-400 dark:text-slate-500 font-normal">(EBITDA Leverage)</span></dt>
+				<dd class="text-gray-500 dark:text-slate-400">Years of core earnings it would take to pay off all debt. Above 4&times; is considered a major red flag by bondholders and lenders.</dd>
+			</div>
+			<div>
+				<dt class="font-semibold text-gray-900 dark:text-white">Short Float</dt>
+				<dd class="text-gray-500 dark:text-slate-400">What percentage of available shares other investors are actively betting against (shorting). High short interest means professional/institutional money expects the price to fall.</dd>
+			</div>
+		</dl>
+	</section>
+
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 transition-all duration-300">
+		<h3 class="font-semibold text-lg mb-3 text-gray-900 dark:text-white">Using this dashboard</h3>
+		<ol class="list-decimal list-inside space-y-2 text-sm text-gray-500 dark:text-slate-400">
+			<li><strong class="text-gray-700 dark:text-slate-200">Overview</strong> — the big picture: how many tickers are scanned, the average and highest strike scores, and the two charts showing the most fragile names and sectors.</li>
+			<li><strong class="text-gray-700 dark:text-slate-200">Strike List</strong> — the full sortable table. Click any row to open a detail panel for that ticker.</li>
+			<li><strong class="text-gray-700 dark:text-slate-200">Past Analysis</strong> — older, one-off analysis snapshots saved from previous manual runs. Useful for context, but not live data.</li>
+			<li>The <strong class="text-gray-700 dark:text-slate-200">Market</strong> dropdown (top of the page) filters everything to US or India only.</li>
+			<li><strong class="text-gray-700 dark:text-slate-200">Run Full Audit</strong> re-scrapes every ticker live and recalculates all scores — it takes a few minutes since it fetches data one ticker at a time.</li>
+		</ol>
+	</section>
+</div>

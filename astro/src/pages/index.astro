@@ -1,0 +1,254 @@
+---
+import "../styles/global.css";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>ALTAIR — Fragility Dashboard</title>
+	</head>
+	<body>
+		<div class="header">
+			<div>
+				<h1 class="title">ALTAIR</h1>
+				<p class="subtitle">Financial Fragility Dashboard — talks to the local FastAPI backend</p>
+			</div>
+			<span id="health-pill" class="pill offline"><span class="dot"></span> checking backend…</span>
+		</div>
+
+		<section class="panel">
+			<div class="controls">
+				<label for="market-filter" class="stat-label">Market</label>
+				<select id="market-filter">
+					<option value="">All</option>
+					<option value="US">US</option>
+					<option value="IND">India</option>
+				</select>
+				<button id="refresh-btn">Refresh</button>
+				<button id="audit-btn" class="primary">Run Full Audit</button>
+				<span class="audit-status" id="audit-status"></span>
+			</div>
+		</section>
+
+		<section class="panel">
+			<h3>Top Targets</h3>
+			<div class="cards" id="top-cards">
+				<p class="empty">Loading…</p>
+			</div>
+		</section>
+
+		<section class="panel">
+			<h3>Full Strike List</h3>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th data-key="ticker">Ticker</th>
+							<th data-key="market">Market</th>
+							<th data-key="sector">Sector</th>
+							<th data-key="pe_ratio">P/E</th>
+							<th data-key="debt_to_equity">Debt/Equity</th>
+							<th data-key="revenue_growth">Rev Growth</th>
+							<th data-key="bailout_probability">Bailout %</th>
+							<th data-key="astra_strike_score" class="sorted">Strike Score</th>
+						</tr>
+					</thead>
+					<tbody id="strike-table-body">
+						<tr><td colspan="8" class="empty">Loading…</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<div class="detail-panel" id="detail-panel">
+			<button class="close" id="detail-close">&times;</button>
+			<h3 id="detail-title">—</h3>
+			<div id="detail-body"></div>
+		</div>
+
+		<script>
+			import { api, type StrikeRow } from "../lib/api";
+
+			const healthPill = document.getElementById("health-pill")!;
+			const marketFilter = document.getElementById("market-filter") as HTMLSelectElement;
+			const refreshBtn = document.getElementById("refresh-btn") as HTMLButtonElement;
+			const auditBtn = document.getElementById("audit-btn") as HTMLButtonElement;
+			const auditStatusEl = document.getElementById("audit-status")!;
+			const topCards = document.getElementById("top-cards")!;
+			const tableBody = document.getElementById("strike-table-body")!;
+			const detailPanel = document.getElementById("detail-panel")!;
+			const detailTitle = document.getElementById("detail-title")!;
+			const detailBody = document.getElementById("detail-body")!;
+			const detailClose = document.getElementById("detail-close")!;
+
+			let currentRows: StrikeRow[] = [];
+			let sortKey = "astra_strike_score";
+			let sortDesc = true;
+			let pollHandle: ReturnType<typeof setInterval> | null = null;
+
+			function fmt(n: unknown, digits = 2): string {
+				if (typeof n !== "number" || Number.isNaN(n)) return "—";
+				return n.toFixed(digits);
+			}
+
+			async function checkHealth() {
+				try {
+					const health = await api.health();
+					healthPill.className = `pill ${health.data_ready ? "online" : "pending"}`;
+					healthPill.innerHTML = `<span class="dot"></span> ${health.engine} · ${health.data_ready ? "data ready" : "no strike data yet"}`;
+				} catch {
+					healthPill.className = "pill offline";
+					healthPill.innerHTML = `<span class="dot"></span> backend unreachable`;
+				}
+			}
+
+			function renderCards(rows: StrikeRow[]) {
+				if (rows.length === 0) {
+					topCards.innerHTML = `<p class="empty">No data. Run an audit or check the backend.</p>`;
+					return;
+				}
+				topCards.innerHTML = rows
+					.map(
+						(r) => `
+					<div class="card" data-ticker="${r.ticker}">
+						<div class="ticker">${r.ticker}</div>
+						<div class="meta">${r.market ?? ""} · ${r.sector ?? ""}</div>
+						<div class="score">${fmt(r.astra_strike_score)}</div>
+					</div>`
+					)
+					.join("");
+			}
+
+			function renderTable(rows: StrikeRow[]) {
+				if (rows.length === 0) {
+					tableBody.innerHTML = `<tr><td colspan="8" class="empty">No data. Run an audit or check the backend.</td></tr>`;
+					return;
+				}
+				const sorted = [...rows].sort((a, b) => {
+					const av = a[sortKey];
+					const bv = b[sortKey];
+					if (typeof av === "number" && typeof bv === "number") {
+						return sortDesc ? bv - av : av - bv;
+					}
+					return sortDesc
+						? String(bv).localeCompare(String(av))
+						: String(av).localeCompare(String(bv));
+				});
+				tableBody.innerHTML = sorted
+					.map(
+						(r) => `
+					<tr data-ticker="${r.ticker}">
+						<td>${r.ticker}</td>
+						<td>${r.market ?? "—"}</td>
+						<td>${r.sector ?? "—"}</td>
+						<td>${fmt(r.pe_ratio)}</td>
+						<td>${fmt(r.debt_to_equity)}</td>
+						<td>${fmt((r.revenue_growth as number) * 100, 1)}%</td>
+						<td>${fmt(r.bailout_probability, 0)}</td>
+						<td>${fmt(r.astra_strike_score)}</td>
+					</tr>`
+					)
+					.join("");
+			}
+
+			async function loadStrikeData() {
+				const market = marketFilter.value || undefined;
+				try {
+					const [rows, top] = await Promise.all([
+						api.strikeList(market),
+						api.topTargets(5, market),
+					]);
+					currentRows = rows;
+					renderCards(top);
+					renderTable(rows);
+				} catch (err) {
+					tableBody.innerHTML = `<tr><td colspan="8" class="error">Could not load strike list: ${(err as Error).message}</td></tr>`;
+					topCards.innerHTML = `<p class="error">Could not load top targets.</p>`;
+				}
+			}
+
+			async function openDetail(ticker: string) {
+				const row = currentRows.find((r) => r.ticker === ticker);
+				const forensic = await api.tickerDetail(ticker);
+				const data = forensic ?? row ?? {};
+				detailTitle.textContent = ticker;
+				const entries = Object.entries(data).filter(([k]) => k !== "ticker");
+				detailBody.innerHTML = entries
+					.map(
+						([k, v]) => `<div class="detail-row"><span class="k">${k}</span><span class="v">${v}</span></div>`
+					)
+					.join("");
+				if (!forensic) {
+					detailBody.innerHTML += `<p class="empty">Deep forensic breakdown (/forensic-ticker) unavailable — showing strike-list row only. See project README, "Known backend issue".</p>`;
+				}
+				detailPanel.classList.add("open");
+			}
+
+			async function pollAuditStatus() {
+				const status = await api.status();
+				auditStatusEl.textContent = status.in_progress
+					? "Audit running in background…"
+					: status.last_run
+						? `Last run: ${status.last_run}`
+						: "No audit run yet.";
+				auditBtn.disabled = status.in_progress;
+				if (!status.in_progress && pollHandle) {
+					clearInterval(pollHandle);
+					pollHandle = null;
+					await loadStrikeData();
+					await checkHealth();
+				}
+			}
+
+			refreshBtn.addEventListener("click", () => {
+				checkHealth();
+				loadStrikeData();
+			});
+
+			marketFilter.addEventListener("change", loadStrikeData);
+
+			auditBtn.addEventListener("click", async () => {
+				auditBtn.disabled = true;
+				const res = await api.triggerAudit();
+				auditStatusEl.textContent = res.message ?? "Audit triggered.";
+				if (!pollHandle) {
+					pollHandle = setInterval(pollAuditStatus, 4000);
+				}
+			});
+
+			document.querySelectorAll("th[data-key]").forEach((th) => {
+				th.addEventListener("click", () => {
+					const key = (th as HTMLElement).dataset.key!;
+					if (sortKey === key) {
+						sortDesc = !sortDesc;
+					} else {
+						sortKey = key;
+						sortDesc = true;
+					}
+					document.querySelectorAll("th[data-key]").forEach((h) => h.classList.remove("sorted"));
+					th.classList.add("sorted");
+					renderTable(currentRows);
+				});
+			});
+
+			tableBody.addEventListener("click", (e) => {
+				const tr = (e.target as HTMLElement).closest("tr[data-ticker]") as HTMLElement | null;
+				if (tr) openDetail(tr.dataset.ticker!);
+			});
+
+			topCards.addEventListener("click", (e) => {
+				const card = (e.target as HTMLElement).closest(".card[data-ticker]") as HTMLElement | null;
+				if (card) openDetail(card.dataset.ticker!);
+			});
+
+			detailClose.addEventListener("click", () => detailPanel.classList.remove("open"));
+
+			checkHealth();
+			loadStrikeData();
+			pollAuditStatus();
+		</script>
+	</body>
+</html>

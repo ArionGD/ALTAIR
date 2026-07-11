@@ -5,7 +5,9 @@ xgboost
 scikit-learn
 fastapi
 uvicorn
+jinja2
 requests
 python-dotenv
 alpha_vantage
 textblob
+ddgs

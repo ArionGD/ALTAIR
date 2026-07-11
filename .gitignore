@@ -12,4 +12,5 @@ venv/
 *.log
 data/raw/
 data/processed/
+source/output/
 # Note: Keeping src and api

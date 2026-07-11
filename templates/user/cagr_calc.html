@@ -1,0 +1,217 @@
+{% extends "user/user_base.html" %}
+
+{% block title %}Altair — CAGR Oracle{% endblock %}
+{% block page_title %}Growth Projection Hub{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<div class="max-w-6xl mx-auto" x-data="{
+    principal: 100000,
+    sip: 10000,
+    rate: 12,
+    years: 10,
+    chartInstance: null,
+    get projections() {
+        let results = [];
+        let r = this.rate / 100 / 12;
+        let total = parseFloat(this.principal);
+        let monthlySip = parseFloat(this.sip);
+        
+        for (let y = 1; y <= this.years; y++) {
+            for (let m = 1; m <= 12; m++) {
+                total = (total + monthlySip) * (1 + r);
+            }
+            results.push({
+                year: y,
+                total: Math.round(total),
+                invested: Math.round(parseFloat(this.principal) + (monthlySip * 12 * y)),
+                interest: Math.round(total - (parseFloat(this.principal) + (monthlySip * 12 * y)))
+            });
+        }
+        return results;
+    },
+    get finalWealth() { return this.projections[this.projections.length - 1].total },
+    initChart() {
+        if (!window.ApexCharts) {
+            console.error('ApexCharts not found');
+            return;
+        }
+        
+        const data = this.projections.map(p => p.total);
+        const invested = this.projections.map(p => p.invested);
+        const labels = this.projections.map(p => 'Year ' + p.year);
+
+        const options = {
+            series: [{ name: 'Total Wealth', data }, { name: 'Total Invested', data: invested }],
+            chart: { type: 'area', height: 500, toolbar: { show: false }, animations: { enabled: true, easing: 'easeinout', speed: 1000 }, background: 'transparent' },
+            labels: labels,
+            colors: ['#4f46e5', '#94a3b8'],
+            stroke: { curve: 'smooth', width: 4 },
+            dataLabels: { enabled: false },
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.05, stops: [0, 95, 100] } },
+            xaxis: { labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600 } } },
+            yaxis: { labels: { formatter: v => '₹' + (v >= 10000000 ? (v / 10000000).toFixed(1) + 'Cr' : v >= 100000 ? (v/100000).toFixed(1) + 'L' : v), style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600 } } },
+            grid: { borderColor: '#f1f5f9', strokeDashArray: 5 },
+            tooltip: { theme: 'dark', x: { show: true } },
+            legend: { show: false }
+        };
+
+        this.chartInstance = new ApexCharts(document.getElementById('wealthChart'), options);
+        this.chartInstance.render();
+    },
+    updateChart() {
+        if (!this.chartInstance) return;
+        const labels = this.projections.map(p => 'Year ' + p.year);
+        const data = this.projections.map(p => p.total);
+        const invested = this.projections.map(p => p.invested);
+        
+        this.chartInstance.updateSeries([
+            { name: 'Total Wealth', data: data },
+            { name: 'Total Invested', data: invested }
+        ]);
+        this.chartInstance.updateOptions({ labels: labels });
+    }
+}" x-init="
+    setTimeout(() => {
+        initChart();
+        $watch('principal', () => updateChart());
+        $watch('sip', () => updateChart());
+        $watch('rate', () => updateChart());
+        $watch('years', () => updateChart());
+    }, 100);
+">
+
+    <!-- Header & Back Button -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <a href="{% url 'user:dashboard' %}" class="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-indigo-600 transition-all uppercase tracking-widest mb-2">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Dashboard
+            </a>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">CAGR Projection Oracle</h1>
+            <p class="text-sm text-gray-400 mt-1">Audit your exponential wealth curve over time.</p>
+        </div>
+        <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-right shadow-sm">
+            <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mb-1">Final Wealth Estimate</p>
+            <p class="text-3xl font-black text-emerald-700 font-syncopate" x-text="'₹' + finalWealth.toLocaleString('en-IN')"></p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8">
+        <!-- Input Hub -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+                <h3 class="text-lg font-bold text-gray-900 mb-8 pb-4 border-b border-gray-50 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-indigo-600"></i> Variable Audit
+                </h3>
+
+                <div class="space-y-6">
+                    <!-- Principal -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Initial Capital</label>
+                            <span class="text-sm font-bold text-indigo-600" x-text="'₹' + parseFloat(principal).toLocaleString('en-IN')"></span>
+                        </div>
+                        <input type="range" min="0" max="10000000" step="50000" x-model="principal" @input="updateChart()"
+                            class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+
+                    <!-- Monthly SIP -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Monthly Portfolio SIP</label>
+                            <span class="text-sm font-bold text-emerald-600" x-text="'₹' + parseFloat(sip).toLocaleString('en-IN')"></span>
+                        </div>
+                        <input type="range" min="0" max="500000" step="5000" x-model="sip" @input="updateChart()"
+                            class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+                    </div>
+
+                    <!-- Expected Return -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Expected Return (CAGR)</label>
+                            <span class="text-sm font-bold text-indigo-600" x-text="rate + '%'"></span>
+                        </div>
+                        <input type="range" min="5" max="35" step="0.5" x-model="rate" @input="updateChart()"
+                            class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+
+                    <!-- Time Horizon -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Time Horizon (Years)</label>
+                            <span class="text-sm font-bold text-indigo-600" x-text="years + ' Years'"></span>
+                        </div>
+                        <input type="range" min="1" max="50" step="1" x-model="years" @input="updateChart()"
+                            class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                    </div>
+                </div>
+
+                <div class="mt-10 p-5 bg-slate-900 rounded-2xl text-white">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-xs font-bold uppercase tracking-widest">Efficiency Audit</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 leading-relaxed">
+                        Compounding is the 8th wonder of the world. At <span class="text-white font-bold" x-text="rate + '%'"></span>, your wealth strikes every year with increasing magnitude.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Hub -->
+        <div class="space-y-8">
+            <div class="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm h-full flex flex-col">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-5 h-5 text-emerald-500"></i> Wealth Accumulation Curve
+                    </h3>
+                    <div class="flex gap-4">
+                        <div class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> Total Wealth
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-200"></span> Total Invested
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="wealthChart" style="height: 500px !important; min-height: 500px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yearly Ledger Table -->
+    <div class="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm mt-8 overflow-hidden">
+        <h3 class="text-lg font-bold text-gray-900 mb-8 flex items-center gap-2">
+            <i data-lucide="table" class="w-5 h-5 text-indigo-600"></i> Yearly Wealth Ledger
+        </h3>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Year Node</th>
+                        <th class="py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Invested Capital</th>
+                        <th class="py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Interest Gains</th>
+                        <th class="py-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">Total Strike Value</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <template x-for="p in projections" :key="p.year">
+                        <tr class="hover:bg-gray-50/50 transition-colors group">
+                            <td class="py-4 text-xs font-black text-gray-900" x-text="'Year ' + p.year"></td>
+                            <td class="py-4 text-xs font-bold text-gray-500" x-text="'₹' + p.invested.toLocaleString('en-IN')"></td>
+                            <td class="py-4 text-xs font-bold text-emerald-600" x-text="'+ ₹' + p.interest.toLocaleString('en-IN')"></td>
+                            <td class="py-4 text-sm font-black text-gray-900" x-text="'₹' + p.total.toLocaleString('en-IN')"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

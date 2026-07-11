@@ -1,0 +1,114 @@
+{% extends "user/user_base.html" %}
+{% load static %}
+
+{% block title %}Altair — AI Market Explainer{% endblock %}
+{% block page_title %}AI Market Analysis{% endblock %}
+{% block nav_analysis %}bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold relative before:content-[''] before:absolute
+before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[20px] before:bg-indigo-600 dark:before:bg-indigo-400
+before:rounded-r-[3px]{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 pb-12" x-data="{ timeline: '{{ timeline }}' }">
+
+    <!-- Control Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 overflow-hidden relative transition-all duration-300">
+        <div class="absolute top-0 right-0 p-8 opacity-5">
+            <i data-lucide="sparkles" class="w-32 h-32 text-indigo-600 dark:text-indigo-400"></i>
+        </div>
+
+        <div class="relative z-10">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">AI Portfolio Explainer</h2>
+            <p class="text-gray-500 dark:text-slate-400 text-sm mb-6">Get real-time insights from Gemini AI on how market trends are
+                affecting your specific holdings.</p>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-2">Select
+                            Timeline</label>
+                        <select name="timeline" x-model="timeline"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                            <option value="today">Today's Market</option>
+                            <option value="yesterday">Yesterday's Analysis</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="range">Specific Range</option>
+                        </select>
+                    </div>
+
+                    <div x-show="timeline === 'range'" x-transition>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-2">From
+                            Date</label>
+                        <input type="date" name="date_from" value="{{ date_from }}"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                    </div>
+
+                    <div x-show="timeline === 'range'" x-transition>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-2">To
+                            Date</label>
+                        <input type="date" name="date_to" value="{{ date_to }}"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit"
+                        class="w-full md:w-auto px-8 py-3 bg-indigo-600 dark:bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 dark:hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        Get AI Explanation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Response Section -->
+    {% if explanation %}
+    <div
+        class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-500/10 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="cpu" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                <h3 class="font-bold text-gray-900 dark:text-white">Analysis Result</h3>
+            </div>
+            <span class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-1 rounded">Powered by
+                Gemini 1.5 Flash</span>
+        </div>
+        <div class="p-8 prose prose-indigo dark:prose-invert max-w-none">
+            <div class="text-gray-700 dark:text-slate-300 leading-relaxed text-sm">
+                {{ explanation|safe|linebreaks }}
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 dark:bg-slate-950 border-t border-gray-100 dark:border-slate-800">
+            <p class="text-[10px] text-gray-400 dark:text-slate-500 italic font-medium uppercase tracking-widest text-center">AI generated
+                insights can be inaccurate. Always do your own research before investing.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-2xl p-6 flex gap-4 items-center">
+        <div class="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+            <h3 class="font-bold text-rose-900 dark:text-rose-400">Something went wrong</h3>
+            <p class="text-rose-600 dark:text-rose-500 text-sm">{{ error }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not explanation and not error %}
+    <div class="bg-gray-50 dark:bg-slate-900/40 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl p-12 text-center transition-all duration-300">
+        <div
+            class="w-16 h-16 bg-white dark:bg-slate-950 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="search" class="w-8 h-8 text-gray-300 dark:text-slate-700"></i>
+        </div>
+        <h3 class="text-gray-900 dark:text-white font-bold mb-1">No analysis generated</h3>
+        <p class="text-gray-500 dark:text-slate-500 text-sm max-w-xs mx-auto">Select a timeline and click the button above to start your
+            AI-powered portfolio explanation.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

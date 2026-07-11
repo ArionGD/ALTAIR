@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+
+{% block title %}ALTAIR — Features{% endblock %}
+
+{% block content %}
+<section class="mb-32 relative pt-48 pb-20 px-6 text-center flex flex-col items-center overflow-hidden transition-colors duration-500 bg-gray-50/30 dark:bg-black">
+	<div class="absolute inset-0 z-0 opacity-30 dark:hidden">
+		<div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-100 rounded-full blur-[120px]"></div>
+	</div>
+	<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[120px] hidden dark:block"></div>
+
+	<p class="text-[10px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-[0.6em] mb-6 font-syncopate relative z-10">Engine Capabilities</p>
+	<h1 class="text-6xl md:text-9xl font-black mb-8 bg-gradient-to-b from-gray-950 to-gray-600 dark:from-white dark:to-gray-600 bg-clip-text text-transparent tracking-tighter font-outfit uppercase relative z-10 transition-all duration-700">
+		Altair Ops
+	</h1>
+	<p class="text-gray-700 dark:text-gray-400 text-xl md:text-2xl max-w-3xl font-medium opacity-90 leading-relaxed font-outfit mx-auto relative z-10 transition-colors">
+		A local, no-account financial OS for spotting structurally weak tickers —
+		high-precision fragility diagnostics computed straight from financials.
+	</p>
+</section>
+
+<section class="max-w-7xl mx-auto px-6">
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+		<div class="bg-white dark:bg-white/[0.02] backdrop-blur-3xl border border-gray-100 dark:border-white/5 rounded-3xl p-10 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all duration-700 group cursor-default shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+			<div class="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-600/10 flex items-center justify-center text-3xl mb-10 group-hover:scale-110 transition-transform shadow-inner">📉</div>
+			<h3 class="text-2xl font-black mb-4 tracking-tight font-outfit text-gray-900 dark:text-white transition-colors">Strike Score Logic</h3>
+			<p class="text-gray-600 dark:text-gray-500 text-sm leading-relaxed mb-8 font-medium transition-colors">
+				Z-Score, Beneish M-Score, Piotroski F-Score, Sloan Ratio, ROIC, leverage,
+				and short interest combined into one 0–100 fragility score per ticker.
+			</p>
+			<div class="flex items-center gap-3 text-blue-600 dark:text-blue-500 text-[9px] font-black uppercase tracking-widest bg-blue-50 dark:bg-blue-500/5 py-1.5 px-3 rounded-lg w-fit transition-colors">
+				<span class="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-500 animate-pulse"></span> Scoring Ready
+			</div>
+		</div>
+
+		<div class="bg-white dark:bg-white/[0.02] backdrop-blur-3xl border border-gray-100 dark:border-white/5 rounded-3xl p-10 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all duration-700 group cursor-default shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+			<div class="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-600/10 flex items-center justify-center text-3xl mb-10 group-hover:scale-110 transition-transform shadow-inner">🌐</div>
+			<h3 class="text-2xl font-black mb-4 tracking-tight font-outfit text-gray-900 dark:text-white transition-colors">Two-Market Pipeline</h3>
+			<p class="text-gray-600 dark:text-gray-500 text-sm leading-relaxed mb-8 font-medium transition-colors">
+				yfinance covers global tickers; a direct NSE bridge covers Indian
+				equities natively — no CSV imports, one live pipeline for both.
+			</p>
+			<div class="flex items-center gap-3 text-indigo-600 dark:text-indigo-500 text-[9px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/5 py-1.5 px-3 rounded-lg w-fit transition-colors">
+				<span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500 animate-pulse"></span> US + NSE Live
+			</div>
+		</div>
+
+		<div class="bg-white dark:bg-white/[0.02] backdrop-blur-3xl border border-gray-100 dark:border-white/5 rounded-3xl p-10 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all duration-700 group cursor-default shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
+			<div class="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-600/10 flex items-center justify-center text-3xl mb-10 group-hover:scale-110 transition-transform shadow-inner">🗂️</div>
+			<h3 class="text-2xl font-black mb-4 tracking-tight font-outfit text-gray-900 dark:text-white transition-colors">Past Analysis Archive</h3>
+			<p class="text-gray-600 dark:text-gray-500 text-sm leading-relaxed mb-8 font-medium transition-colors">
+				Every one-off analysis run gets saved as a CSV snapshot — browse
+				historical scans side by side with the live strike list.
+			</p>
+			<div class="flex items-center gap-3 text-violet-600 dark:text-violet-500 text-[9px] font-black uppercase tracking-widest bg-violet-50 dark:bg-violet-500/5 py-1.5 px-3 rounded-lg w-fit transition-colors">
+				<span class="w-1.5 h-1.5 rounded-full bg-violet-600 dark:bg-violet-500 animate-pulse"></span> Archive Synced
+			</div>
+		</div>
+	</div>
+
+	<div class="mt-32 grid grid-cols-1 lg:grid-cols-4 gap-8 pb-32">
+		<div class="lg:col-span-2 bg-gradient-to-br from-blue-600/5 to-transparent dark:from-blue-600/20 dark:to-transparent border border-gray-100 dark:border-white/5 rounded-3xl p-12 relative overflow-hidden group shadow-sm dark:shadow-none">
+			<div class="absolute inset-0 bg-gray-50/10 dark:bg-black/10 backdrop-blur-sm group-hover:backdrop-blur-none transition-all duration-700"></div>
+			<h2 class="text-4xl font-black mb-6 relative z-10 font-outfit text-gray-900 dark:text-white transition-colors">Direct Engine Interface</h2>
+			<p class="text-gray-700 dark:text-gray-400 font-medium relative z-10 italic mb-8 transition-colors">Low-latency access to the ALTAIR scoring API — no auth, all local.</p>
+			<a href="/docs" class="relative z-10 px-8 py-3 bg-blue-600 dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-[0.3em] rounded-xl inline-block hover:scale-105 transition-transform shadow-lg shadow-blue-500/20">Open API Docs</a>
+		</div>
+
+		<div class="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 rounded-3xl p-10 flex flex-col justify-center text-center shadow-sm dark:shadow-none">
+			<span class="text-4xl font-black text-gray-900 dark:text-white font-mono mb-2 tracking-tighter transition-colors">2</span>
+			<span class="text-[9px] font-black text-gray-500 dark:text-gray-600 uppercase tracking-widest font-syncopate transition-colors">Markets Covered</span>
+		</div>
+
+		<div class="bg-white dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 rounded-3xl p-10 flex flex-col justify-center text-center shadow-sm dark:shadow-none">
+			<span class="text-4xl font-black text-gray-900 dark:text-white font-mono mb-2 tracking-tighter transition-colors">$0</span>
+			<span class="text-[9px] font-black text-gray-500 dark:text-gray-600 uppercase tracking-widest font-syncopate transition-colors">Cost To Run</span>
+		</div>
+	</div>
+</section>
+{% endblock %}

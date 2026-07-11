@@ -1,0 +1,217 @@
+{% extends "user/user_base.html" %}
+{% load static %}
+
+{% block title %}Altair — Advanced Portfolio Intelligence{% endblock %}
+{% block page_title %}Portfolio Intelligence{% endblock %}
+{% block nav_analytics %}bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold relative before:content-[''] before:absolute
+before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[20px] before:bg-indigo-600 dark:before:bg-indigo-400
+before:rounded-r-[3px]{% endblock %}
+
+{% block content %}
+<div class="space-y-8 pb-12">
+    <!-- Top Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+            <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="wallet" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <p class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total Assets</p>
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">₹{{ total_mv|floatformat:2 }}</h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+            <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="trending-up" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+            </div>
+            <p class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total Net Profit</p>
+            <h3 class="text-2xl font-black {% if total_pl >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                ₹{{ total_pl|floatformat:2 }}
+            </h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+            <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="activity" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <p class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Portfolio Alpha</p>
+            <h3 class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                {{ portfolio_pl_pct|floatformat:1 }}%
+                <span class="text-xs font-bold text-gray-400 dark:text-slate-600 ml-1">vs Nifty {{ nifty_return }}%</span>
+            </h3>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+            <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center mb-4">
+                <i data-lucide="shield-check" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+            </div>
+            <p class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Holdings Health</p>
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white">{{ fund_labels|length }} Assets</h3>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Asset Diversification -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-500"></i> Asset Distribution
+                </h4>
+            </div>
+            <div class="h-64">
+                <canvas id="typeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Profit/Loss contribution -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i> P/L By Holding
+                </h4>
+            </div>
+            <div class="h-64">
+                <canvas id="plChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Risk Profile -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Portfolio Risk Score
+                </h4>
+            </div>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Holding Period Efficiency -->
+        <div class="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-500"></i> Holding Duration
+                </h4>
+            </div>
+            <div class="h-64">
+                <canvas id="periodChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {% include "analytics/partials/growth_terminal.html" %}
+</div>
+
+<!-- Pass data securely to JS -->
+{{ type_labels|json_script:"type-labels" }}
+{{ type_values|json_script:"type-values" }}
+{{ sector_labels|json_script:"sector-labels" }}
+{{ sector_values|json_script:"sector-values" }}
+{{ pl_labels|json_script:"pl-labels" }}
+{{ pl_values|json_script:"pl-values" }}
+{{ period_labels|json_script:"period-labels" }}
+{{ period_values|json_script:"period-values" }}
+{{ risk_labels|json_script:"risk-labels" }}
+{{ risk_values|json_script:"risk-values" }}
+{{ portfolio_pl_pct|json_script:"portfolio-pl-pct" }}
+{{ nifty_return|json_script:"nifty-return" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script>
+    Chart.register(ChartDataLabels);
+    const getJson = (id) => JSON.parse(document.getElementById(id).textContent);
+    
+    // Theme Utility
+    const isDark = () => document.documentElement.classList.contains('dark');
+    const getThemeColor = (light, dark) => isDark() ? dark : light;
+
+    const palette = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#d946ef', '#8b5cf6', '#06b6d4', '#f43f5e', '#14b8a6', '#f97316'];
+    const colors = { indigo: '#6366f1', emerald: '#10b981', rose: '#ef4444', amber: '#f59e0b', slate: '#9ca3af' };
+    const fmtCurr = (val) => '₹' + Number(val).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+    const getChartDefaults = () => ({
+        grid: getThemeColor('#f1f5f9', '#1e293b'),
+        text: getThemeColor('#94a3b8', '#64748b'),
+        border: getThemeColor('#ffffff', '#0f172a')
+    });
+
+    // Global Chart Registry
+    const chartInstances = {};
+
+    // 1. Type Chart
+    chartInstances.typeChart = new Chart(document.getElementById('typeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: getJson('type-labels'),
+            datasets: [{ data: getJson('type-values'), backgroundColor: palette, borderWidth: 8, borderColor: getChartDefaults().border }]
+        },
+        options: { cutout: '70%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10, weight: '700' }, color: getChartDefaults().text } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: (v, ctx) => (v * 100 / ctx.dataset.data.reduce((a, b) => a + b, 0)).toFixed(1) + "%" } } }
+    });
+
+    // 2. PL Chart
+    chartInstances.plChart = new Chart(document.getElementById('plChart'), {
+        type: 'bar',
+        data: {
+            labels: getJson('pl-labels'),
+            datasets: [{ label: 'Gain / Loss', data: getJson('pl-values'), backgroundColor: (ctx) => ctx.raw >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)', borderRadius: 8, barThickness: 20 }]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false }, ticks: { color: getChartDefaults().text } }, y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: getChartDefaults().text } } }, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', color: (ctx) => ctx.raw >= 0 ? colors.emerald : colors.rose, font: { weight: 'bold', size: 10 }, formatter: (val) => (val >= 0 ? '+' : '') + fmtCurr(val) } } }
+    });
+
+    // 3. Risk Chart
+    chartInstances.riskChart = new Chart(document.getElementById('riskChart'), {
+        type: 'doughnut',
+        data: {
+            labels: getJson('risk-labels'),
+            datasets: [{ data: getJson('risk-values'), backgroundColor: [colors.rose, colors.amber, colors.emerald], borderWidth: 0 }]
+        },
+        options: { cutout: '60%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10, weight: '700' }, color: getChartDefaults().text } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 10 }, formatter: (v, ctx) => (v * 100 / ctx.dataset.data.reduce((a, b) => a + b, 0)).toFixed(0) + "%" } } }
+    });
+
+    // 4. Period Chart
+    chartInstances.periodChart = new Chart(document.getElementById('periodChart'), {
+        type: 'bar',
+        data: {
+            labels: getJson('period-labels'),
+            datasets: [{ data: getJson('period-values'), backgroundColor: colors.indigo, borderRadius: 12, barThickness: 45 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { grid: { color: getChartDefaults().grid }, ticks: { font: { size: 9 }, callback: (v) => fmtCurr(v), color: getChartDefaults().text } }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' }, color: getChartDefaults().text } } }, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: colors.indigo, font: { weight: 'bold', size: 10 }, formatter: (val) => fmtCurr(val) } } }
+    });
+   
+    // Smooth Theme Synchronizer
+    const updateChartsTheme = () => {
+        const d = getChartDefaults();
+        
+        Object.values(window.chartInstances).forEach(chart => {
+            // Update Text Color globally if applicable
+            if (chart.options.plugins.legend) chart.options.plugins.legend.labels.color = d.text;
+            
+            // Update Scales
+            if (chart.options.scales) {
+                Object.values(chart.options.scales).forEach(scale => {
+                    if (scale.grid) scale.grid.color = d.grid;
+                    if (scale.ticks) scale.ticks.color = d.text;
+                });
+            }
+            
+            // Update Dataset Borders (Doughnuts)
+            if (chart.config.type === 'doughnut') {
+                chart.data.datasets.forEach(ds => ds.borderColor = d.border);
+            }
+            
+            // Update Line Chart point borders
+            if (chart.config.type === 'line') {
+                chart.data.datasets.forEach(ds => ds.pointBorderColor = d.border);
+            }
+
+            chart.update('none'); // Update without animation for instant snap to theme
+        });
+    };
+
+    // Theme Switch Observer (No Reload)
+    const observer = new MutationObserver(() => {
+        updateChartsTheme();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+</script>
+{% endblock %}

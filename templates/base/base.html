@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" class="h-auto min-h-full" x-data :class="{ 'dark': $store.theme.dark }">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<script src="https://unpkg.com/lucide@latest"></script>
+
+	<!-- Theme store. Shares the "altair-theme" localStorage key with the
+	     dashboard (core/dashboard.html), so the preference is consistent
+	     across both areas of the site. -->
+	<script>
+		document.addEventListener('alpine:init', () => {
+			Alpine.store('theme', {
+				dark: localStorage.getItem('altair-theme') !== 'light',
+				toggle() {
+					this.dark = !this.dark;
+					localStorage.setItem('altair-theme', this.dark ? 'dark' : 'light');
+					document.documentElement.classList.toggle('dark', this.dark);
+				},
+			});
+		});
+	</script>
+	<!-- Pre-paint theme lock (avoids a flash of the wrong theme before Alpine loads) -->
+	<script>
+		if (localStorage.getItem('altair-theme') === 'light') {
+			document.documentElement.classList.remove('dark');
+		} else {
+			document.documentElement.classList.add('dark');
+		}
+	</script>
+
+	<meta name="description" content="ALTAIR — financial fragility scoring for public tickers, computed from financials and market data." />
+	<title>{% block title %}ALTAIR | Financial Fragility Engine{% endblock %}</title>
+	<link rel="icon" type="image/jpeg" href="/static/image/altair.jpg" />
+
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Syncopate:wght@400;700&display=swap"
+		rel="stylesheet"
+	/>
+
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = { darkMode: 'class' };
+	</script>
+	<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+	<style>
+		.font-syncopate { font-family: 'Syncopate', sans-serif; }
+		.font-outfit { font-family: 'Outfit', sans-serif; }
+		body { font-family: 'Inter', sans-serif; }
+		[x-cloak] { display: none !important; }
+
+		::-webkit-scrollbar { width: 10px !important; height: 10px !important; }
+		::-webkit-scrollbar-track { background: #0f172a !important; }
+		::-webkit-scrollbar-thumb { background: #ffffff !important; border-radius: 100px !important; border: 3px solid #0f172a !important; }
+		::-webkit-scrollbar-thumb:hover { background: #e2e8f0 !important; }
+
+		html, body, main {
+			overscroll-behavior: contain !important;
+			overscroll-behavior-y: contain !important;
+			scrollbar-width: thin;
+			scrollbar-color: #ffffff #0f172a;
+		}
+	</style>
+	{% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col font-sans bg-white dark:bg-black text-gray-900 dark:text-white transition-colors duration-300 overflow-y-auto overflow-x-hidden overscroll-none">
+	{% include "base/header.html" %}
+
+	<main class="flex-grow w-full pt-20">
+		{% block content %}{% endblock %}
+	</main>
+
+	{% include "base/footer.html" %}
+
+	<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
+	<script>
+		const lenis = new Lenis({
+			duration: 1.8,
+			lerp: 0.05,
+			easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+			orientation: 'vertical',
+			gestureOrientation: 'vertical',
+			smoothWheel: true,
+			wheelMultiplier: 0.8,
+			touchMultiplier: 1.2,
+			infinite: false,
+		});
+		function raf(time) {
+			lenis.raf(time);
+			requestAnimationFrame(raf);
+		}
+		requestAnimationFrame(raf);
+
+		if (typeof lucide !== 'undefined') lucide.createIcons();
+		document.addEventListener('alpine:initialized', () => lucide.createIcons());
+	</script>
+	{% block scripts %}{% endblock %}
+</body>
+</html>

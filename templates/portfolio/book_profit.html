@@ -1,0 +1,197 @@
+{% extends "user/user_base.html" %}
+{% load static %}
+
+{% block title %}Altair — Book Profit / Loss{% endblock %}
+{% block page_title %}Book Profit / Loss{% endblock %}
+{% block nav_portfolio %}bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold relative before:content-[''] before:absolute
+before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[20px] before:bg-indigo-600 dark:before:bg-indigo-400
+before:rounded-r-[3px]{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-8" x-data="{
+        sellQty: 0,
+        sellPrice: {{ holding.current_price }},
+        buyPrice: {{ holding.purchase_price }},
+        confirmed: false,
+        get totalSell() { return (this.sellQty * this.sellPrice).toFixed(2) },
+        get realizedPL() { return ((this.sellPrice - this.buyPrice) * this.sellQty).toFixed(2) },
+        get isProfit() { return parseFloat(this.realizedPL) >= 0 },
+        get canBook() { return parseFloat(this.sellQty) > 0 && parseFloat(this.sellPrice) > 0 }
+    }">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{% url 'portfolio:overview' %}"
+            class="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors text-gray-500 dark:text-slate-400">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Book Profit / Loss</h1>
+            <p class="text-sm text-gray-400 dark:text-slate-500">Close or partially sell your position</p>
+        </div>
+    </div>
+
+    <!-- Current Holding Summary -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 mb-5 transition-all duration-300">
+        <div class="flex items-center gap-4 mb-5">
+            <div
+                class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 text-white font-bold text-lg uppercase shadow-lg shadow-emerald-500/20">
+                {{ holding.symbol.0 }}
+            </div>
+            <div>
+                <p class="text-lg font-bold text-gray-900 dark:text-white uppercase">{{ holding.symbol }}</p>
+                <p class="text-sm text-gray-400 dark:text-slate-500">{{ holding.name }}</p>
+            </div>
+            <div class="ml-auto text-right">
+                <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold">Unrealized P/L</p>
+                <p
+                    class="text-lg font-bold {% if holding.profit_loss >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+                    {% if holding.profit_loss >= 0 %}+{% endif %}₹{{ holding.profit_loss|floatformat:2 }}
+                </p>
+                <p class="text-xs {% if holding.profit_loss >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %} font-semibold">
+                    {% if holding.profit_loss >= 0 %}+{% endif %}{{ holding.profit_loss_pct|floatformat:2 }}%
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 text-sm border border-gray-100 dark:border-slate-800">
+            <div>
+                <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-0.5">Qty Held</p>
+                <p class="font-bold text-gray-900 dark:text-white">{{ holding.quantity|floatformat:4 }}</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-0.5">Avg. Buy Price</p>
+                <p class="font-semibold text-gray-700 dark:text-slate-300">₹{{ holding.purchase_price|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-widest font-bold mb-0.5">Current Price</p>
+                <p class="font-semibold text-gray-700 dark:text-slate-300">₹{{ holding.current_price|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Form -->
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-6 mb-5 transition-all duration-300">
+        <h2 class="text-base font-bold text-gray-900 dark:text-white mb-4">Enter Sell Details</h2>
+
+        <form method="POST" action="{% url 'portfolio:book_profit' holding.pk %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+
+                <!-- Sell Quantity -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                        Sell Quantity <span class="text-gray-400 dark:text-slate-600 font-normal normal-case">
+                            (max {{ holding.quantity|floatformat:4 }})</span>
+                    </label>
+                    <input type="number" name="sell_quantity" x-model="sellQty" min="0.0001"
+                        max="{{ holding.quantity }}" step="0.0001" required
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        placeholder="e.g. 5">
+                </div>
+
+                <!-- Sell Price -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                        Sell Price (₹ per unit)
+                    </label>
+                    <input type="number" name="sell_price" x-model="sellPrice" min="0.01" step="0.01" required
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        placeholder="e.g. 2500.00">
+                </div>
+
+                <!-- Live P/L Preview -->
+                <div class="rounded-xl border-2 p-4 transition-all"
+                    :class="isProfit ? 'border-emerald-200 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-900/10' : 'border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10'">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 uppercase tracking-widest font-bold mb-0.5">Total Sale Value</p>
+                            <p class="font-bold text-gray-900 dark:text-white">₹<span x-text="totalSell"></span></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 uppercase tracking-widest font-bold mb-0.5">Realized P/L</p>
+                            <p class="font-bold text-xl" :class="isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+                                <span
+                                    x-text="isProfit ? '+₹' + realizedPL : '-₹' + Math.abs(realizedPL).toFixed(2)"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Book Button -->
+                <div x-show="!confirmed">
+                    <button type="button" @click="confirmed = true" :disabled="!canBook" :class="canBook
+                            ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 dark:shadow-none cursor-pointer'
+                            : 'bg-gray-200 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed'"
+                        class="w-full py-3 text-white rounded-xl font-bold transition-all shadow-lg mt-2 flex items-center justify-center gap-2">
+                        <i data-lucide="banknote" class="w-4 h-4"></i>
+                        Book Position
+                    </button>
+                    <p class="text-center text-xs text-gray-400 dark:text-slate-600 mt-2" x-show="!canBook">Enter quantity and price above
+                        to continue</p>
+                </div>
+
+                <!-- Step 2: Confirmation Panel -->
+                <div x-show="confirmed" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0" class="rounded-2xl border-2 p-5 mt-2"
+                    :class="isProfit ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20' : 'border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20'">
+
+                    <p class="text-sm font-bold mb-3" :class="isProfit ? 'text-emerald-800 dark:text-emerald-400' : 'text-rose-800 dark:text-rose-400'">
+                        <i data-lucide="alert-circle" class="w-4 h-4 inline-block mr-1 -mt-0.5"></i>
+                        Confirm your booking
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm mb-4">
+                        <div class="bg-white/70 dark:bg-slate-900/70 rounded-xl p-3 border border-transparent dark:border-slate-800">
+                            <p class="text-[10px] text-gray-400 dark:text-slate-600 uppercase tracking-widest font-bold mb-0.5">Selling</p>
+                            <p class="font-bold text-gray-900 dark:text-white"><span x-text="sellQty"></span> units of 
+                                {{ holding.symbol }}</p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-slate-900/70 rounded-xl p-3 border border-transparent dark:border-slate-800">
+                            <p class="text-[10px] text-gray-400 dark:text-slate-600 uppercase tracking-widest font-bold mb-0.5">At Price</p>
+                            <p class="font-bold text-gray-900 dark:text-white">₹<span x-text="parseFloat(sellPrice).toFixed(2)"></span>
+                            </p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-slate-900/70 rounded-xl p-3 border border-transparent dark:border-slate-800">
+                            <p class="text-[10px] text-gray-400 dark:text-slate-600 uppercase tracking-widest font-bold mb-0.5">Total Sale Value</p>
+                            <p class="font-bold text-gray-900 dark:text-white">₹<span x-text="totalSell"></span></p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-slate-900/70 rounded-xl p-3 border border-transparent dark:border-slate-800">
+                            <p class="text-[10px] text-gray-400 dark:text-slate-600 uppercase tracking-widest font-bold mb-0.5">Realized P/L</p>
+                            <p class="font-bold text-lg" :class="isProfit ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
+                                <span
+                                    x-text="isProfit ? '+₹' + realizedPL : '-₹' + Math.abs(realizedPL).toFixed(2)"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" @click="confirmed = false"
+                            class="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-400 rounded-xl text-sm font-semibold hover:bg-white dark:hover:bg-slate-800 transition-all">
+                            ← Edit Details
+                        </button>
+                        <button type="submit"
+                            class="flex-1 py-2.5 text-white rounded-xl text-sm font-bold transition-all shadow-lg flex items-center justify-center gap-1.5"
+                            :class="isProfit ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100 dark:shadow-none' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-100 dark:shadow-none'">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                            Confirm &amp; Book Position
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- Info note -->
+    <div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 transition-all">
+        <i data-lucide="info" class="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+        <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+            Booking a position records a <strong>Realized P/L</strong> transaction in your ledger.
+            If you sell all units, the holding is removed from your portfolio. Partial sells reduce the quantity.
+</div>
+{% endblock %}
+    </p>
+    </div>
+</div>
+{% endblock %}

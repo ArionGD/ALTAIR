@@ -1,8 +1,12 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from src.api.StrikeRoutes import router as strike_router
+from src.api.DashboardRoutes import router as dashboard_router
+from src.api.ArchiveRoutes import router as archive_router
+from src.api.templates import templates
 
 # Load Environment Variables
 load_dotenv()
@@ -22,16 +26,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Static assets (logo, etc.) — served at /static/...
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
+
 # Include Modular Routers
 app.include_router(strike_router)
+app.include_router(dashboard_router)
+app.include_router(archive_router)
 
 @app.get("/")
-async def root():
-    return {
-        "engine": "ALTAIR V1.0 - Operational",
-        "objective": "High-Precision Financial Predation",
-        "api_v1_docs": "/docs"
-    }
+async def root(request: Request):
+    """Landing page. For the raw engine status JSON, see /api/v1/health."""
+    return templates.TemplateResponse(request, "landing/home.html")
+
+@app.get("/features")
+async def features(request: Request):
+    return templates.TemplateResponse(request, "landing/features.html")
+
+@app.get("/support")
+async def support(request: Request):
+    return templates.TemplateResponse(request, "landing/support.html")
 
 if __name__ == "__main__":
     import uvicorn

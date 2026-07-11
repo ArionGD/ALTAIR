@@ -1,0 +1,56 @@
+<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+	<div class="flex items-center gap-3 mb-4">
+		<div class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400">
+			<i data-lucide="list" class="w-4 h-4"></i>
+		</div>
+		<span class="text-[15px] font-bold text-gray-900 dark:text-white flex-1">Full Strike List</span>
+		<span class="text-xs text-gray-400 dark:text-slate-500 font-medium" x-show="search" x-text="sortedRows().length + ' match' + (sortedRows().length === 1 ? '' : 'es')"></span>
+	</div>
+	<div class="overflow-x-auto">
+		<table class="w-full text-sm">
+			<thead>
+				<tr class="border-b border-gray-100 dark:border-slate-800">
+					<template x-for="col in columns" :key="col.key">
+						<th
+							@click="setSort(col.key)"
+							class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4 cursor-pointer select-none whitespace-nowrap"
+							:class="sortKey === col.key ? 'text-indigo-600 dark:text-indigo-400' : ''"
+						>
+							<span x-text="col.label"></span>
+							<span x-show="sortKey === col.key" x-text="sortDesc ? ' ↓' : ' ↑'"></span>
+						</th>
+					</template>
+				</tr>
+			</thead>
+			<tbody>
+				<template x-if="sortedRows().length === 0">
+					<tr>
+						<td class="py-16 text-center" :colspan="columns.length">
+							<div class="flex flex-col items-center">
+								<div class="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3">
+									<i data-lucide="inbox" class="w-6 h-6 text-gray-300 dark:text-slate-600"></i>
+								</div>
+								<p class="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
+									<span x-show="!search">No data. Run an audit or check the backend.</span>
+									<span x-show="search">No tickers match "<span x-text="search"></span>"</span>
+								</p>
+							</div>
+						</td>
+					</tr>
+				</template>
+				<template x-for="row in sortedRows()" :key="row.ticker + row.sector">
+					<tr @click="openDetail(row.ticker)" class="border-t border-gray-50 dark:border-slate-800/50 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 cursor-pointer text-gray-900 dark:text-white transition-colors">
+						<td class="py-3 pr-4 font-bold" x-text="row.ticker"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="row.market ?? '—'"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="row.sector ?? '—'"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.pe_ratio)"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.debt_to_equity)"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.revenue_growth * 100, 1) + '%'"></td>
+						<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.bailout_probability, 0)"></td>
+						<td class="py-3 pr-4 font-black text-rose-600 dark:text-rose-400" x-text="fmt(row.astra_strike_score)"></td>
+					</tr>
+				</template>
+			</tbody>
+		</table>
+	</div>
+</section>
