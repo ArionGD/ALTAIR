@@ -7,11 +7,18 @@ from src.engine.hunter.SovereignAuditor import SovereignAuditor
 class GlobalBilateralCollector:
     """
     ALTAIR Universe Collector.
-    Fixed universe: market -> sector -> sub_sector -> 10 tickers.
-    10 sectors x 2 sub-sectors x 10 tickers = 200 tickers per market
-    (US + IND = 400 total). Sub-sectors let scenario exposure (e.g.
-    oil-shock beta) vary within a sector instead of being one flat
-    sector-wide number.
+    Fixed universe: market -> sector -> sub_sector -> tickers.
+    US market: 10 sectors x 2 sub-sectors x 10 tickers = 200 tickers.
+    IND market: 5 sectors (Energy: Upstream/Downstream, IT: Service/Product,
+    Banking: Bank/NBFC, Automobiles: Two_Wheeler/Passenger/Commercial/HMV,
+    Defense: Aeronautics/HMV/Drones), each sub-sector holding every screened
+    NSE ticker with live market cap > 10,000 crore (variable count per
+    sub-sector, not a fixed 10 - see scripts/build_ind_universe.py). Note
+    "HMV" appears under both Automobiles and Defense as distinct categories
+    with mostly-distinct ticker sets (BEML/TMCV legitimately appear in both,
+    being dual-use civilian/defense heavy-vehicle makers).
+    Sub-sectors let scenario exposure (e.g. oil-shock beta) vary within a
+    sector instead of being one flat sector-wide number.
     """
     def __init__(self, base_dir="data/raw"):
         self.base_dir = base_dir
@@ -59,46 +66,37 @@ class GlobalBilateralCollector:
                     "Chemicals": ["DOW", "LYB", "DD", "EMN", "CE", "ALB", "FMC", "OLN", "ASH", "HUN"],
                 },
             },
+            # IND universe: 3 sectors x 2 sub-sectors, each populated by
+            # screening a broad candidate list for live market cap > 10,000
+            # crore (see scripts/build_ind_universe.py, run against yfinance
+            # since NSE's own sector-index API is currently bot-blocked -
+            # see NSEDataBridge.py). Re-run that script and paste fresh
+            # results here if this universe needs updating later; LTIMindtree
+            # is deliberately absent from IT/Service - its correct yfinance
+            # symbol couldn't be confirmed, see the script's inline note.
             "IND": {
-                "BFSI": {
-                    "Private_Banks": ["HDFCBANK.NS", "ICICIBANK.NS", "KOTAKBANK.NS", "AXISBANK.NS", "INDUSINDBK.NS", "IDFCFIRSTB.NS", "FEDERALBNK.NS", "RBLBANK.NS", "BANDHANBNK.NS", "AUBANK.NS"],
-                    "PSU_NBFC": ["SBIN.NS", "BAJFINANCE.NS", "LICHSGFIN.NS", "CHOLAFIN.NS", "PNB.NS", "BANKBARODA.NS", "RECLTD.NS", "CANBK.NS", "UNIONBANK.NS", "MUTHOOTFIN.NS"],
+                "Energy": {
+                    "Upstream": ["ONGC.NS", "OIL.NS", "RELIANCE.NS", "VEDL.NS", "GAIL.NS", "PETRONET.NS", "MRPL.NS", "GSPL.NS", "GUJGASLTD.NS"],
+                    "Downstream": ["IOC.NS", "BPCL.NS", "HINDPETRO.NS", "NTPC.NS", "COALINDIA.NS", "CASTROLIND.NS", "IGL.NS", "MGL.NS", "CHAMBLFERT.NS"],
                 },
-                "IT_Service": {
-                    "Tier1_IT": ["TCS.NS", "INFY.NS", "HCLTECH.NS", "WIPRO.NS", "LTIM.NS", "TECHM.NS", "LTTS.NS", "MINDTREE.NS", "OFSS.NS", "HEXAWARE.NS"],
-                    "Tier2_IT": ["MPHASIS.NS", "COFORGE.NS", "PERSISTENT.NS", "TATAELXSI.NS", "CYIENT.NS", "ZENSARTECH.NS", "SONATSOFTW.NS", "NEWGEN.NS", "INTELLECT.NS", "BSOFT.NS"],
+                "IT": {
+                    "Service": ["TCS.NS", "INFY.NS", "HCLTECH.NS", "WIPRO.NS", "TECHM.NS", "LTTS.NS", "OFSS.NS", "HEXT.NS", "MPHASIS.NS", "COFORGE.NS", "PERSISTENT.NS", "ZENSARTECH.NS", "INTELLECT.NS", "KPITTECH.NS", "TATAELXSI.NS", "FSL.NS"],
+                    "Product": ["NAUKRI.NS", "ETERNAL.NS", "PAYTM.NS", "POLICYBZR.NS", "DELHIVERY.NS", "NYKAA.NS", "AFFLE.NS", "NAZARA.NS", "RATEGAIN.NS"],
                 },
-                "Infra": {
-                    "Construction_Cement": ["LT.NS", "ULTRACEMCO.NS", "GRASIM.NS", "AMBUJACEM.NS", "SHREECEM.NS", "DLF.NS", "ACC.NS", "JKCEMENT.NS", "RAMCOCEM.NS", "DALBHARAT.NS"],
-                    "Capital_Goods_Defense": ["ADANIENT.NS", "ADANIPORTS.NS", "ABB.NS", "SIEMENS.NS", "BEL.NS", "HAL.NS", "CGPOWER.NS", "BHEL.NS", "THERMAX.NS", "MAZDOCK.NS"],
+                "Banking": {
+                    "Bank": ["HDFCBANK.NS", "ICICIBANK.NS", "KOTAKBANK.NS", "AXISBANK.NS", "SBIN.NS", "INDUSINDBK.NS", "IDFCFIRSTB.NS", "FEDERALBNK.NS", "BANKBARODA.NS", "PNB.NS", "CANBK.NS", "UNIONBANK.NS", "AUBANK.NS", "RBLBANK.NS", "BANDHANBNK.NS", "YESBANK.NS", "INDIANB.NS", "MAHABANK.NS", "IOB.NS", "CENTRALBK.NS", "UCOBANK.NS", "J&KBANK.NS", "KARURVYSYA.NS", "CUB.NS", "SOUTHBANK.NS"],
+                    "NBFC": ["BAJFINANCE.NS", "BAJAJFINSV.NS", "LICHSGFIN.NS", "CHOLAFIN.NS", "RECLTD.NS", "PFC.NS", "MUTHOOTFIN.NS", "SHRIRAMFIN.NS", "SBICARD.NS", "MANAPPURAM.NS", "IREDA.NS", "PNBHOUSING.NS", "AAVAS.NS", "CREDITACC.NS", "POONAWALLA.NS", "IIFL.NS", "M&MFIN.NS", "SUNDARMFIN.NS", "ABCAPITAL.NS", "TATACAP.NS"],
                 },
-                "Auto": {
-                    "Passenger_Two_Wheeler": ["TATAMOTORS.NS", "MARUTI.NS", "BAJAJ-AUTO.NS", "EICHERMOT.NS", "HEROMOTOCO.NS", "M&M.NS", "TVSMOTOR.NS", "TIINDIA.NS", "ESCORTS.NS", "FORCEMOT.NS"],
-                    "Commercial_Ancillary": ["ASHOKLEY.NS", "BHARATFORG.NS", "MRF.NS", "MOTHERSON.NS", "BALKRISIND.NS", "EXIDEIND.NS", "AMARAJABAT.NS", "SUNDRMFAST.NS", "BOSCHLTD.NS", "APOLLOTYRE.NS"],
+                "Automobiles": {
+                    "Two_Wheeler": ["HEROMOTOCO.NS", "BAJAJ-AUTO.NS", "TVSMOTOR.NS", "EICHERMOT.NS", "TIINDIA.NS"],
+                    "Passenger": ["MARUTI.NS", "TMPV.NS", "M&M.NS", "FORCEMOT.NS"],
+                    "Commercial": ["ASHOKLEY.NS", "BHARATFORG.NS", "MOTHERSON.NS", "BALKRISIND.NS", "EXIDEIND.NS", "SUNDRMFAST.NS", "BOSCHLTD.NS", "APOLLOTYRE.NS", "MRF.NS", "CEATLTD.NS", "ENDURANCE.NS", "SONACOMS.NS", "SCHAEFFLER.NS", "UNOMINDA.NS", "SANSERA.NS", "TMCV.NS"],
+                    "HMV": [],
                 },
-                "Energy_Renewable": {
-                    "Green_Generation": ["ADANIGREEN.NS", "SUZLON.NS", "TATAPOWER.NS", "JSWENERGY.NS", "NHPC.NS", "SJVN.NS", "INOXWIND.NS", "BHEL.NS", "ORIENTGREEN.NS", "WEBSOL.NS"],
-                    "Financing_Grid": ["IREDA.NS", "PFC.NS", "RECLTD.NS", "POWERGRID.NS", "BORORENEW.NS", "KPIGREEN.NS", "WAAREE.NS", "SJVN.NS", "GENSOL.NS", "SWSOLAR.NS"],
-                },
-                "Energy_Fossil": {
-                    "Upstream_Integrated": ["RELIANCE.NS", "ONGC.NS", "OIL.NS", "GAIL.NS", "PETRONET.NS", "MRPL.NS", "GSPL.NS", "AEGISCHEM.NS", "GUJGASLTD.NS", "MGL.NS"],
-                    "Downstream_Distribution": ["NTPC.NS", "COALINDIA.NS", "BPCL.NS", "IOC.NS", "HINDPETRO.NS", "CASTROLIND.NS", "IGL.NS", "NFL.NS", "RCF.NS", "CHAMBLFERT.NS"],
-                },
-                "Health": {
-                    "Pharma_Generics": ["SUNPHARMA.NS", "CIPLA.NS", "DRREDDY.NS", "LUPIN.NS", "AUROPHARMA.NS", "ZYDUSLIFE.NS", "TORNTPHARM.NS", "ALKEM.NS", "IPCALAB.NS", "GLENMARK.NS"],
-                    "Hospitals_Diagnostics": ["APOLLOHOSP.NS", "DIVISLAB.NS", "MANKIND.NS", "MAXHEALTH.NS", "GLAND.NS", "METROPOLIS.NS", "FORTIS.NS", "LALPATHLAB.NS", "KIMS.NS", "NH.NS"],
-                },
-                "Consumer_Tech_Beauty": {
-                    "New_Age_Internet": ["ZOMATO.NS", "PAYTM.NS", "POLICYBZR.NS", "DELHIVERY.NS", "CARTRADE.NS", "MAPMYINDIA.NS", "NAUKRI.NS", "EASEMYTRIP.NS", "IXIGO.NS", "NYKAA.NS"],
-                    "Beauty_D2C": ["HONASA.NS", "FSN.NS", "VEDL.NS", "EMAMILTD.NS", "GODREJCP.NS", "DABUR.NS", "MARICO.NS", "COLPAL.NS", "GILLETTE.NS", "BAJAJCON.NS"],
-                },
-                "Telecom_Media": {
-                    "Telecom_Carriers": ["BHARTIARTL.NS", "IDEA.NS", "INDUSTOWER.NS", "TATACOMM.NS", "RAILTEL.NS", "HFCL.NS", "STLTECH.NS", "ITI.NS", "GTLINFRA.NS", "TEJASNET.NS"],
-                    "Media_Entertainment": ["ZEEL.NS", "SUNTV.NS", "PVRINOX.NS", "NAZARA.NS", "SAREGAMA.NS", "TIPS.NS", "NETWORK18.NS", "DBCORP.NS", "JAGRAN.NS", "TV18BRDCST.NS"],
-                },
-                "Materials_Metals": {
-                    "Steel_Mining": ["TATASTEEL.NS", "JSWSTEEL.NS", "HINDALCO.NS", "VEDL.NS", "SAIL.NS", "NMDC.NS", "JINDALSTEL.NS", "HINDZINC.NS", "NATIONALUM.NS", "APLAPOLLO.NS"],
-                    "Chemicals": ["PIDILITIND.NS", "SRF.NS", "UPL.NS", "AARTIIND.NS", "DEEPAKNTR.NS", "NAVINFLUOR.NS", "TATACHEM.NS", "GNFC.NS", "FLUOROCHEM.NS", "VINATIORGA.NS"],
+                "Defense": {
+                    "Aeronautics": ["HAL.NS", "BEL.NS", "ASTRAMICRO.NS", "PARAS.NS", "MTARTECH.NS", "DATAPATTNS.NS"],
+                    "HMV": ["BEML.NS"],
+                    "Drones": ["ZENTEC.NS"],
                 },
             },
         }
@@ -213,6 +211,50 @@ class GlobalBilateralCollector:
     def get_universe(self):
         """Returns the market -> sector -> sub_sector -> [tickers] map for UI drill-downs."""
         return self.markets
+
+    def resolve_filtered_tickers(self, market, sector=None, sub_sector=None, ticker=None):
+        """Resolves a market/sector/sub_sector/ticker filter (any of the last
+        three may be None/omitted, meaning "all") into a flat list of
+        (ticker, sector, sub_sector) tuples, tagged with their sector/
+        sub_sector so the result can be scored and grouped without a
+        separate CSV-tagging pass. Used by the Sector Ranker tool, which
+        (unlike the oil-shock scenario tool) may span every sub-sector in a
+        sector or every sector in a market, not just one fixed ~10-ticker
+        sub-sector."""
+        sectors = self.markets.get(market, {})
+        if sector:
+            sectors = {sector: sectors.get(sector, {})}
+
+        resolved = []
+        for sec, sub_sectors in sectors.items():
+            chosen = {sub_sector: sub_sectors.get(sub_sector, [])} if sub_sector else sub_sectors
+            for sub, tickers in chosen.items():
+                for t in tickers:
+                    if ticker and t != ticker:
+                        continue
+                    resolved.append((t, sec, sub))
+        return resolved
+
+    def fetch_filtered(self, market, sector=None, sub_sector=None, ticker=None):
+        """On-demand fetch for the Sector Ranker tool: resolves the filter to
+        a ticker list (see resolve_filtered_tickers) and fetches each live,
+        tagging rows with market/sector/sub_sector directly - no CSV
+        round-trip, since results are scored and returned in the same
+        request rather than cached to data/raw/ like the fixed-universe
+        audits above."""
+        targets = self.resolve_filtered_tickers(market, sector, sub_sector, ticker)
+        rows = []
+        for t, sec, sub in targets:
+            try:
+                data = self.fetch_metrics(t)
+                data['market'] = market
+                data['sector'] = sec
+                data['sub_sector'] = sub
+                rows.append(data)
+                time.sleep(1)  # Rate limit protection
+            except Exception as e:
+                print(f"      [!] Warning: Failed on {t}: {e}")
+        return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":

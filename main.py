@@ -8,6 +8,8 @@ from src.api.DashboardRoutes import router as dashboard_router
 from src.api.ArchiveRoutes import router as archive_router
 from src.api.ScenarioRoutes import router as scenario_router
 from src.api.EGBRoutes import router as egb_router
+from src.api.DetailRoutes import router as detail_router
+from src.api.MarketRoutes import router as market_router
 from src.api.templates import templates
 
 # Load Environment Variables
@@ -37,6 +39,8 @@ app.include_router(dashboard_router)
 app.include_router(archive_router)
 app.include_router(scenario_router)
 app.include_router(egb_router)
+app.include_router(detail_router)
+app.include_router(market_router)
 
 @app.get("/")
 async def root(request: Request):

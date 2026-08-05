@@ -1,0 +1,158 @@
+<div>
+	<!-- Filters -->
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300">
+		<div class="flex items-center gap-3 mb-4">
+			<div class="w-8 h-8 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+				<i data-lucide="trending-up" class="w-4 h-4"></i>
+			</div>
+			<span class="text-[15px] font-bold text-gray-900 dark:text-white">Swing Scanner — Long &amp; Short Setups</span>
+		</div>
+		<p class="text-xs text-gray-500 dark:text-slate-500 mb-5 leading-relaxed">
+			Pick a market, sector, category, and (optionally) one company — leave any of the last three on
+			"All" to widen the run. ALTAIR fetches live financials and a year of daily price history per ticker,
+			then combines fundamental strength with technical momentum (trend, RSI, volume) into a two-sided
+			verdict: <span class="font-semibold text-emerald-600 dark:text-emerald-400">LONG SETUP</span>
+			(fundamentally strong + bullish momentum — buy candidates),
+			<span class="font-semibold text-rose-600 dark:text-rose-400">SHORT SETUP</span>
+			(fundamentally weak + bearish momentum — short candidates), or
+			<span class="font-semibold text-gray-500 dark:text-slate-400">NO SETUP</span> (mismatched or
+			inconclusive signals). This is a swing-horizon (days-to-weeks) signal, not intraday or long-term.
+		</p>
+
+		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+			<div>
+				<label class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Market</label>
+				<select x-model="sMarket" @change="onSMarketChange()" class="w-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-white">
+					<option value="US">US</option>
+					<option value="IND">India</option>
+				</select>
+			</div>
+			<div>
+				<label class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Sector</label>
+				<select x-model="sSector" @change="onSSectorChange()" class="w-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-white">
+					<option value="">All Sectors</option>
+					<template x-for="s in sSectors()" :key="s">
+						<option :value="s" x-text="s.replace(/_/g, ' ')"></option>
+					</template>
+				</select>
+			</div>
+			<div>
+				<label class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Category</label>
+				<select x-model="sSubSector" @change="onSCategoryChange()" :disabled="!sSector" class="w-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-white disabled:opacity-50">
+					<option value="">All Categories</option>
+					<template x-for="ss in sSubSectors()" :key="ss">
+						<option :value="ss" x-text="ss.replace(/_/g, ' ')"></option>
+					</template>
+				</select>
+			</div>
+			<div>
+				<label class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-1.5">Company</label>
+				<select x-model="sTicker" :disabled="!sSector || !sSubSector" class="w-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-white disabled:opacity-50">
+					<option value="">All Companies</option>
+					<template x-for="t in sCompanies()" :key="t">
+						<option :value="t" x-text="t"></option>
+					</template>
+				</select>
+			</div>
+		</div>
+
+		<button
+			@click="runSwingScan()"
+			:disabled="swingLoading"
+			class="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-blue-500/20"
+		>
+			<i data-lucide="search" class="w-3.5 h-3.5"></i>
+			<span x-text="swingLoading ? 'Scanning…' : 'Scan'"></span>
+		</button>
+		<p class="text-xs text-gray-400 dark:text-slate-500 mt-2" x-show="!sSector">
+			"All Sectors" / "All Categories" scans every ticker in this market — this fetches live per
+			ticker (financials + price history) and can take a while for a large run.
+		</p>
+		<p x-show="swingError" x-text="swingError" class="text-rose-600 dark:text-rose-400 text-sm mt-3"></p>
+	</section>
+
+	<!-- Legend -->
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300" x-show="swingRan">
+		<div class="flex flex-wrap gap-2">
+			<span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">LONG SETUP — strong fundamentals + bullish momentum</span>
+			<span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">SHORT SETUP — weak fundamentals + bearish momentum</span>
+			<span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400">NO SETUP — mismatched or inconclusive</span>
+		</div>
+	</section>
+
+	<!-- Results -->
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+		<div class="flex items-center gap-3 mb-4">
+			<div class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400">
+				<i data-lucide="table" class="w-4 h-4"></i>
+			</div>
+			<span class="text-[15px] font-bold text-gray-900 dark:text-white flex-1">Scan Results</span>
+			<span class="text-xs text-gray-400 dark:text-slate-500 font-medium" x-show="swingRows.length" x-text="swingRows.length + ' companies'"></span>
+		</div>
+
+		<template x-if="swingLoading">
+			<div class="py-16 text-center">
+				<div class="relative w-16 h-16 mx-auto mb-5">
+					<div class="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-500/10"></div>
+					<div class="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 dark:border-t-indigo-400 animate-spin"></div>
+					<div class="absolute inset-0 flex items-center justify-center">
+						<i data-lucide="trending-up" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+					</div>
+				</div>
+				<p class="text-sm font-bold text-gray-700 dark:text-slate-300 mb-1" x-text="swingLoadingMessage"></p>
+				<p class="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-widest">Reading trend, momentum, and volume, ticker by ticker…</p>
+				<div class="flex justify-center gap-1.5 mt-4">
+					<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:0ms"></span>
+					<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:150ms"></span>
+					<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:300ms"></span>
+				</div>
+			</div>
+		</template>
+
+		<template x-if="!swingRan && !swingLoading">
+			<div class="py-16 text-center">
+				<div class="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 mx-auto">
+					<i data-lucide="trending-up" class="w-6 h-6 text-gray-300 dark:text-slate-600"></i>
+				</div>
+				<p class="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Pick your filters and scan</p>
+			</div>
+		</template>
+
+		<div class="overflow-x-auto" x-show="!swingLoading && swingRan && swingRows.length > 0">
+			<table class="w-full text-sm">
+				<thead>
+					<tr class="border-b border-gray-100 dark:border-slate-800">
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Rank</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Ticker</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Sector / Category</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Strike Score</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Price</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">RSI(14)</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">50MA / 200MA</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Technical Score</th>
+						<th class="text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3 pr-4">Verdict</th>
+					</tr>
+				</thead>
+				<tbody>
+					<template x-for="row in swingRows" :key="row.ticker">
+						<tr class="border-t border-gray-50 dark:border-slate-800/50 text-gray-900 dark:text-white">
+							<td class="py-3 pr-4 font-bold text-gray-400 dark:text-slate-500" x-text="row.rank"></td>
+							<td class="py-3 pr-4 font-bold" x-text="row.ticker"></td>
+							<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="(row.sector ?? '—').replace(/_/g, ' ') + ' / ' + (row.sub_sector ?? '—').replace(/_/g, ' ')"></td>
+							<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.astra_strike_score, 1)"></td>
+							<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.price, 2)"></td>
+							<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.rsi14, 1)"></td>
+							<td class="py-3 pr-4 text-gray-600 dark:text-slate-400" x-text="fmt(row.ma50, 1) + ' / ' + fmt(row.ma200, 1)"></td>
+							<td class="py-3 pr-4 font-semibold" :class="row.technical_score >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'" x-text="fmt(row.technical_score, 1)"></td>
+							<td class="py-3 pr-4">
+								<span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" :class="swingVerdictClass(row.swing_verdict)" x-text="row.swing_verdict"></span>
+							</td>
+						</tr>
+					</template>
+				</tbody>
+			</table>
+		</div>
+
+		<p x-show="!swingLoading && swingRan && swingRows.length === 0" class="text-gray-500 dark:text-slate-500 text-sm py-8 text-center">No tickers matched this filter combination.</p>
+	</section>
+</div>

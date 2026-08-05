@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 # Import ALTAIR Engine Components
 from src.engine.hunter.DataCollector import GlobalBilateralCollector
 from src.engine.hunter.VulnerabilityRanker import VulnerabilityRanker
+from astro.company.alpha_analyzer import analyze_company_alpha, REGISTRY_PATH
 
 router = APIRouter(prefix="/api/v1", tags=["Sovereign Audits"])
 
@@ -132,3 +133,38 @@ async def health_check():
         "working_dir": os.getcwd(),
         "data_ready": os.path.exists(MASTER_FILE)
     }
+
+@router.get("/astro-scanner")
+async def get_astro_scanner(market: str = None):
+    """Scans all companies in the natal registry, compiles their Astro + Financial analysis, and returns them ranked by Unified Alpha Score."""
+    if not os.path.exists(REGISTRY_PATH):
+        raise HTTPException(status_code=404, detail="Company natal registry not found.")
+    
+    try:
+        df_reg = pd.read_csv(REGISTRY_PATH)
+        results = []
+        for _, row in df_reg.iterrows():
+            ticker = row["ticker"]
+            is_ind = ticker.endswith(".NS")
+            if market:
+                if market.upper() == "IND" and not is_ind:
+                    continue
+                if market.upper() == "US" and is_ind:
+                    continue
+                    
+            co_analysis = analyze_company_alpha(ticker)
+            if co_analysis.get("status") != "error":
+                results.append(co_analysis)
+                
+        results = sorted(results, key=lambda x: x["unified_alpha_score"], reverse=True)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Astro scanner error: {str(e)}")
+
+@router.get("/astro-scanner/detail/{ticker}")
+async def get_astro_ticker_detail(ticker: str):
+    """Returns the full compiled Astro + Financial analysis for a specific ticker."""
+    res = analyze_company_alpha(ticker)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res.get("message"))
+    return res

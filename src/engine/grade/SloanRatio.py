@@ -11,8 +11,8 @@ class SloanRatioEngine:
     indicator of future share price cratering.
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_sloan_ratio(self, ticker_symbol):
         print(f"[*] Auditing Earnings Quality (Sloan Ratio) for {ticker_symbol}...")

@@ -10,8 +10,8 @@ class ShortFloatEngine:
     A Score > 20% indicates 'Short Squeeze Risk' (Danger zone).
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_short_float(self, ticker_symbol):
         print(f"[*] Auditing Short Interest (Short Float) for {ticker_symbol}...")

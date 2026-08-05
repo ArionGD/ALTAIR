@@ -1,0 +1,100 @@
+{
+  "natal": {
+    "AAPL": {
+      "Lagna": "Capricorn",
+      "MoonNakshatra": "Mrigasira - 2",
+      "NatalPlanets": {
+        "Sun": "Sagittarius",
+        "Moon": "Taurus",
+        "Mars": "Sagittarius",
+        "Mercury": "Sagittarius",
+        "Jupiter": "Aries",
+        "Venus": "Aquarius",
+        "Saturn": "Cancer",
+        "Rahu": "Libra",
+        "Ketu": "Aries"
+      },
+      "HouseSigns": {
+        "House_1": "Capricorn",
+        "House_2": "Aquarius",
+        "House_3": "Pisces",
+        "House_4": "Aries",
+        "House_5": "Taurus",
+        "House_6": "Gemini",
+        "House_7": "Cancer",
+        "House_8": "Leo",
+        "House_9": "Virgo",
+        "House_10": "Libra",
+        "House_11": "Scorpio",
+        "House_12": "Sagittarius"
+      }
+    },
+    "RELIANCE.NS": {
+      "Lagna": "Cancer",
+      "MoonNakshatra": "Pushyami - 2",
+      "NatalPlanets": {
+        "Sun": "Aries",
+        "Moon": "Cancer",
+        "Mars": "Aquarius",
+        "Mercury": "Aries",
+        "Jupiter": "Capricorn",
+        "Venus": "Taurus",
+        "Saturn": "Taurus",
+        "Rahu": "Sagittarius",
+        "Ketu": "Gemini"
+      },
+      "HouseSigns": {
+        "House_1": "Cancer",
+        "House_2": "Leo",
+        "House_3": "Virgo",
+        "House_4": "Libra",
+        "House_5": "Scorpio",
+        "House_6": "Sagittarius",
+        "House_7": "Capricorn",
+        "House_8": "Aquarius",
+        "House_9": "Pisces",
+        "House_10": "Aries",
+        "House_11": "Taurus",
+        "House_12": "Gemini"
+      }
+    }
+  },
+  "transits": {
+    "2026-07-26": {
+      "AAPL": {
+        "CurrentDasha": {
+          "Mahadasha": "Saturn",
+          "Bhukti": "Mercury"
+        },
+        "Transits": {
+          "Sun": "Cancer",
+          "Moon": "Sagittarius",
+          "Mars": "Taurus",
+          "Mercury": "Gemini",
+          "Jupiter": "Cancer",
+          "Venus": "Leo",
+          "Saturn": "Pisces",
+          "Rahu": "Aquarius",
+          "Ketu": "Leo"
+        }
+      },
+      "RELIANCE.NS": {
+        "CurrentDasha": {
+          "Mahadasha": "Venus",
+          "Bhukti": "Jupiter"
+        },
+        "Transits": {
+          "Sun": "Cancer",
+          "Moon": "Sagittarius",
+          "Mars": "Taurus",
+          "Mercury": "Gemini",
+          "Jupiter": "Cancer",
+          "Venus": "Leo",
+          "Saturn": "Pisces",
+          "Rahu": "Aquarius",
+          "Ketu": "Leo"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+ticker,company_name,incorporation_date,incorporation_time,timezone,city,state,country,longitude,latitude
+AAPL,Apple Inc.,1977-01-03,09:00,-08:00,Cupertino,CA,USA,-122.032,37.323
+TSLA,Tesla Inc.,2003-07-01,09:00,-05:00,Wilmington,DE,USA,-75.547,39.745
+MSFT,Microsoft Corp.,1975-04-04,09:00,-08:00,Redmond,WA,USA,-122.121,47.674
+AMZN,Amazon.com Inc.,1994-07-05,09:00,-08:00,Seattle,WA,USA,-122.332,47.606
+NVDA,NVIDIA Corp.,1993-04-05,09:00,-08:00,Santa Clara,CA,USA,-121.955,37.354
+RELIANCE.NS,Reliance Industries Ltd.,1973-05-08,11:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+TCS.NS,Tata Consultancy Services Ltd.,1968-04-01,10:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+INFY.NS,Infosys Ltd.,1981-07-02,10:00,+05:30,Pune,Maharashtra,India,73.856,18.520
+HDFCBANK.NS,HDFC Bank Ltd.,1994-08-30,10:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+ICICIBANK.NS,ICICI Bank Ltd.,1994-01-05,10:00,+05:30,Vadodara,Gujarat,India,73.181,22.307
+SBIN.NS,State Bank of India,1955-07-01,10:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+ZOMATO.NS,Zomato Ltd.,2010-01-18,10:00,+05:30,New Delhi,Delhi,India,77.209,28.613
+PAYTM.NS,One97 Communications Ltd. (Paytm),2000-12-22,10:00,+05:30,New Delhi,Delhi,India,77.209,28.613
+NYKAA.NS,FSN E-Commerce Ventures Ltd. (Nykaa),2012-04-24,10:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+DELHIVERY.NS,Delhivery Ltd.,2011-06-22,10:00,+05:30,New Delhi,Delhi,India,77.209,28.613
+HONASA.NS,Honasa Consumer Ltd. (Mamaearth),2016-09-16,10:00,+05:30,New Delhi,Delhi,India,77.209,28.613
+CARTRADE.NS,CarTrade Tech Ltd.,2000-04-28,10:00,+05:30,Mumbai,Maharashtra,India,72.877,19.076
+POLICYBZR.NS,PB Fintech Ltd. (Policybazaar),2008-06-04,10:00,+05:30,New Delhi,Delhi,India,77.209,28.613

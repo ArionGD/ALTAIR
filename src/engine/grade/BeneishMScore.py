@@ -11,8 +11,8 @@ class BeneishMScoreEngine:
     Score < -2.22 = Not a Manipulator (Real Operations).
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_m_score(self, ticker_symbol):
         print(f"[*] Auditing Manipulation (Beneish M-Score) for {ticker_symbol}...")
@@ -29,24 +29,34 @@ class BeneishMScoreEngine:
                 return -2.5 # Negative/Safe default
             
             # --- Key Variables ---
-            sales = financials.loc['Total Revenue'].iloc[0]
-            prev_sales = financials.loc['Total Revenue'].iloc[1]
-            receivables = balance_sheet.loc['Accounts Receivable'].iloc[0] if 'Accounts Receivable' in balance_sheet.index else 0
-            prev_receivables = balance_sheet.loc['Accounts Receivable'].iloc[1] if 'Accounts Receivable' in balance_sheet.index and len(balance_sheet.columns) > 1 else 0
-            gp = financials.loc['Gross Profit'].iloc[0]
-            prev_gp = financials.loc['Gross Profit'].iloc[1]
-            cogs = financials.loc['Cost Of Revenue'].iloc[0]
-            prev_cogs = financials.loc['Cost Of Revenue'].iloc[1]
-            assets = balance_sheet.loc['Total Assets'].iloc[0]
-            prev_assets = balance_sheet.loc['Total Assets'].iloc[1]
-            dep = financials.loc['Depreciation And Amortization'].iloc[0] if 'Depreciation And Amortization' in financials.index else 0
-            prev_dep = financials.loc['Depreciation And Amortization'].iloc[1] if 'Depreciation And Amortization' in financials.index and len(financials.columns) > 1 else dep
-            ppe = balance_sheet.loc['Net PPE'].iloc[0] if 'Net PPE' in balance_sheet.index else 1000
-            prev_ppe = balance_sheet.loc['Net PPE'].iloc[1] if 'Net PPE' in balance_sheet.index and len(balance_sheet.columns) > 1 else 1000
-            sga = financials.loc['Selling General And Administration'].iloc[0] if 'Selling General And Administration' in financials.index else 0
-            prev_sga = financials.loc['Selling General And Administration'].iloc[1] if 'Selling General And Administration' in financials.index and len(financials.columns) > 1 else 0
-            cfo = cashflow.loc['Operating Cash Flow'].iloc[0]
-            
+            # yfinance can have a row present in the index but NaN for a
+            # specific period's cell (seen on IOC.NS: 'Selling General And
+            # Administration' row exists, latest-year value is NaN) - a bare
+            # "if 'X' in index else default" guard misses that, and a NaN
+            # here silently propagates through every ratio below into the
+            # final m_score, which then poisons the whole weighted AVS sum
+            # in VulnerabilityRanker (any NaN input -> NaN sum). _safe()
+            # normalizes both "row missing" and "row present but NaN" to the
+            # same fallback default.
+            def _safe(value, default=0):
+                return default if pd.isna(value) else value
+
+            sales = _safe(financials.loc['Total Revenue'].iloc[0])
+            prev_sales = _safe(financials.loc['Total Revenue'].iloc[1])
+            receivables = _safe(balance_sheet.loc['Accounts Receivable'].iloc[0]) if 'Accounts Receivable' in balance_sheet.index else 0
+            prev_receivables = _safe(balance_sheet.loc['Accounts Receivable'].iloc[1]) if 'Accounts Receivable' in balance_sheet.index and len(balance_sheet.columns) > 1 else 0
+            gp = _safe(financials.loc['Gross Profit'].iloc[0])
+            prev_gp = _safe(financials.loc['Gross Profit'].iloc[1])
+            assets = _safe(balance_sheet.loc['Total Assets'].iloc[0])
+            prev_assets = _safe(balance_sheet.loc['Total Assets'].iloc[1])
+            dep = _safe(financials.loc['Depreciation And Amortization'].iloc[0]) if 'Depreciation And Amortization' in financials.index else 0
+            prev_dep = _safe(financials.loc['Depreciation And Amortization'].iloc[1]) if 'Depreciation And Amortization' in financials.index and len(financials.columns) > 1 else dep
+            ppe = _safe(balance_sheet.loc['Net PPE'].iloc[0], default=1000) if 'Net PPE' in balance_sheet.index else 1000
+            prev_ppe = _safe(balance_sheet.loc['Net PPE'].iloc[1], default=1000) if 'Net PPE' in balance_sheet.index and len(balance_sheet.columns) > 1 else 1000
+            sga = _safe(financials.loc['Selling General And Administration'].iloc[0]) if 'Selling General And Administration' in financials.index else 0
+            prev_sga = _safe(financials.loc['Selling General And Administration'].iloc[1]) if 'Selling General And Administration' in financials.index and len(financials.columns) > 1 else 0
+            cfo = _safe(cashflow.loc['Operating Cash Flow'].iloc[0])
+
             # --- The indices (8-Ratio) ---
             dsri = (receivables/sales) / (prev_receivables/prev_sales) if prev_receivables and prev_sales else 1
             gmi = (prev_gp/prev_sales) / (gp/sales) if gp and sales else 1

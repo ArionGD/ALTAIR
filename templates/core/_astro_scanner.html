@@ -1,0 +1,257 @@
+<!-- Astro Scanner Tab Content -->
+<section class="space-y-6">
+	<!-- Summary Card grid -->
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+		<div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm transition-all duration-300">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+					<i data-lucide="scan-eye" class="w-5 h-5"></i>
+				</div>
+				<div>
+					<p class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Universe Size</p>
+					<h3 class="text-2xl font-black text-gray-900 dark:text-white" x-text="astroRows.length">0</h3>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm transition-all duration-300">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+					<i data-lucide="trending-up" class="w-5 h-5"></i>
+				</div>
+				<div>
+					<p class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Strong Buys</p>
+					<h3 class="text-2xl font-black text-gray-900 dark:text-white" x-text="astroRows.filter(r => r.call_recommendation.includes('STRONG BUY')).length">0</h3>
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm transition-all duration-300">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 bg-rose-50 dark:bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-600 dark:text-rose-400">
+					<i data-lucide="alert-triangle" class="w-5 h-5"></i>
+				</div>
+				<div>
+					<p class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Sovereign Shorts</p>
+					<h3 class="text-2xl font-black text-gray-900 dark:text-white" x-text="astroRows.filter(r => r.call_recommendation.includes('SOVEREIGN SHORT')).length">0</h3>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main Scanning Table -->
+	<div class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-5 shadow-sm transition-all duration-300">
+		<div class="flex items-center gap-3 mb-5">
+			<div class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400">
+				<i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+			</div>
+			<span class="text-[15px] font-bold text-gray-900 dark:text-white flex-1">Astro-Financial Scanning Results</span>
+			<button 
+				@click="loadAstroData(true)" 
+				class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+				:disabled="astroLoading"
+			>
+				<i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="astroLoading ? 'animate-spin' : ''"></i>
+				<span>Force Reload</span>
+			</button>
+		</div>
+
+		<!-- Loading spinner -->
+		<div x-show="astroLoading" class="py-16 text-center">
+			<div class="flex flex-col items-center justify-center">
+				<div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+				<p class="text-sm font-medium text-gray-500 dark:text-slate-400">Querying VedAstro API & compiling financial profiles...</p>
+				<p class="text-xs text-gray-400 dark:text-slate-500 mt-1">This takes about 10-15 seconds per new ticker. Cache hits are instant.</p>
+			</div>
+		</div>
+
+		<!-- Error alert -->
+		<div x-show="!astroLoading && astroError" class="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 p-4 rounded-xl text-sm" x-text="astroError"></div>
+
+		<!-- Table View -->
+		<div x-show="!astroLoading && !astroError" class="overflow-x-auto">
+			<table class="w-full text-sm">
+				<thead>
+					<tr class="border-b border-gray-100 dark:border-slate-800 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest pb-3">
+						<th class="pb-3 pr-4">Ticker</th>
+						<th class="pb-3 pr-4">Name</th>
+						<th class="pb-3 pr-4">Lagna</th>
+						<th class="pb-3 pr-4">Dasha Lord</th>
+						<th class="pb-3 pr-4 text-center">Fin Quality</th>
+						<th class="pb-3 pr-4 text-center">Astro Growth</th>
+						<th class="pb-3 pr-4 text-center">Alpha Score</th>
+						<th class="pb-3 pr-4">interpreted Call</th>
+					</tr>
+				</thead>
+				<tbody>
+					<template x-if="astroRows.length === 0">
+						<tr>
+							<td class="py-16 text-center" colspan="8">
+								<div class="flex flex-col items-center">
+									<i data-lucide="database-backup" class="w-8 h-8 text-gray-300 dark:text-slate-600 mb-2"></i>
+									<span class="text-gray-400 dark:text-slate-500">No registry companies loaded. Click reload.</span>
+								</div>
+							</td>
+						</tr>
+					</template>
+					<template x-for="row in astroRows" :key="row.ticker">
+						<tr @click="openAstroDetail(row.ticker)" class="border-t border-gray-50 dark:border-slate-800/50 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 cursor-pointer text-gray-900 dark:text-white transition-colors">
+							<td class="py-3.5 pr-4 font-bold" x-text="row.ticker"></td>
+							<td class="py-3.5 pr-4 text-gray-600 dark:text-slate-400" x-text="row.company_name"></td>
+							<td class="py-3.5 pr-4 text-gray-600 dark:text-slate-400 font-medium" x-text="row.lagna"></td>
+							<td class="py-3.5 pr-4 text-gray-600 dark:text-slate-400" x-text="row.current_mahadasha + ' - ' + row.current_bhukti"></td>
+							<td class="py-3.5 pr-4 text-center font-bold text-gray-700 dark:text-slate-300" x-text="row.financial_quality + '%'"></td>
+							<td class="py-3.5 pr-4 text-center font-bold text-amber-600 dark:text-amber-400" x-text="row.astro_growth_score + '%'"></td>
+							<td class="py-3.5 pr-4 text-center font-black text-indigo-600 dark:text-indigo-400 text-base" x-text="row.unified_alpha_score + '%'"></td>
+							<td class="py-3.5 pr-4">
+								<span 
+									class="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide inline-block"
+									:class="{
+										'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400': row.call_color === 'green',
+										'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400': row.call_color === 'red',
+										'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400': row.call_color === 'yellow',
+										'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400': row.call_color === 'indigo',
+										'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400': row.call_color === 'gray'
+									}"
+									x-text="row.call_recommendation"
+								></span>
+							</td>
+						</tr>
+					</template>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<!-- Detail Drawer slide-over for Astro detail -->
+	<div
+		x-cloak
+		x-show="astroDetailTicker"
+		x-transition
+		class="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 p-6 overflow-y-auto z-50 shadow-2xl transition-all duration-300"
+	>
+		<div class="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-4 mb-4">
+			<div>
+				<h3 class="font-black text-xl text-gray-900 dark:text-white" x-text="astroDetailTicker"></h3>
+				<span class="text-xs text-gray-400 dark:text-slate-500" x-text="astroDetail.company_name"></span>
+			</div>
+			<button @click="astroDetailTicker = null" class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white text-xl">&times;</button>
+		</div>
+
+		<!-- Detail Loading -->
+		<div x-show="astroDetailLoading" class="py-12 text-center">
+			<div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+			<span class="text-xs text-gray-400 dark:text-slate-500">Retrieving chart details...</span>
+		</div>
+
+		<!-- Detail Content -->
+		<div x-show="!astroDetailLoading && astroDetail.ticker" class="space-y-6">
+			<!-- Call Card -->
+			<div 
+				class="p-4 rounded-xl border"
+				:class="{
+					'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-920': astroDetail.call_color === 'green',
+					'bg-rose-50/50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-920': astroDetail.call_color === 'red',
+					'bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-920': astroDetail.call_color === 'yellow',
+					'bg-indigo-50/50 dark:bg-indigo-500/5 border-indigo-100 dark:border-indigo-920': astroDetail.call_color === 'indigo',
+					'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-800': astroDetail.call_color === 'gray'
+				}"
+			>
+				<h4 
+					class="font-black text-sm uppercase tracking-wider mb-1"
+					:class="{
+						'text-emerald-700 dark:text-emerald-400': astroDetail.call_color === 'green',
+						'text-rose-700 dark:text-rose-400': astroDetail.call_color === 'red',
+						'text-amber-700 dark:text-amber-400': astroDetail.call_color === 'yellow',
+						'text-indigo-700 dark:text-indigo-400': astroDetail.call_color === 'indigo',
+						'text-gray-700 dark:text-slate-300': astroDetail.call_color === 'gray'
+					}"
+					x-text="astroDetail.call_recommendation"
+				></h4>
+				<p class="text-xs text-gray-600 dark:text-slate-400 leading-relaxed" x-text="astroDetail.call_description"></p>
+			</div>
+
+			<!-- Unified Alpha Scores -->
+			<div class="bg-gray-50 dark:bg-slate-850 p-4 rounded-xl border border-gray-100 dark:border-slate-800 space-y-3">
+				<h4 class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Unified Alpha Breakdown</h4>
+				
+				<div class="flex items-center justify-between text-sm">
+					<span class="text-gray-500 dark:text-slate-400">Financial Quality:</span>
+					<span class="font-extrabold text-gray-900 dark:text-white" x-text="astroDetail.financial_quality + '%'"></span>
+				</div>
+				<div class="flex items-center justify-between text-sm">
+					<span class="text-gray-500 dark:text-slate-400">Astro Growth Score:</span>
+					<span class="font-extrabold text-amber-600 dark:text-amber-400" x-text="astroDetail.astro_growth_score + '%'"></span>
+				</div>
+				<div class="border-t border-gray-200 dark:border-slate-700 my-2"></div>
+				<div class="flex items-center justify-between text-sm">
+					<span class="text-gray-900 dark:text-white font-bold">Unified Alpha Score:</span>
+					<span class="font-black text-indigo-600 dark:text-indigo-400 text-lg" x-text="astroDetail.unified_alpha_score + '%'"></span>
+				</div>
+			</div>
+
+			<!-- Birth metadata -->
+			<div class="space-y-2">
+				<h4 class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest border-b border-gray-100 dark:border-slate-800 pb-2">Incorporation birth Chart</h4>
+				<div class="grid grid-cols-2 gap-4 text-xs">
+					<div>
+						<p class="text-gray-400 dark:text-slate-500 mb-0.5">Incorporation Date</p>
+						<p class="font-bold text-gray-900 dark:text-white" x-text="astroDetail.incorporation_date"></p>
+					</div>
+					<div>
+						<p class="text-gray-400 dark:text-slate-500 mb-0.5">Incorporation City</p>
+						<p class="font-bold text-gray-900 dark:text-white" x-text="astroDetail.city + ', ' + astroDetail.country"></p>
+					</div>
+					<div>
+						<p class="text-gray-400 dark:text-slate-500 mb-0.5">Lagna (Ascendant)</p>
+						<p class="font-bold text-indigo-600 dark:text-indigo-400" x-text="astroDetail.lagna"></p>
+					</div>
+					<div>
+						<p class="text-gray-400 dark:text-slate-500 mb-0.5">Moon Nakshatra</p>
+						<p class="font-bold text-amber-600 dark:text-amber-400" x-text="astroDetail.moon_nakshatra"></p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Astrological Details -->
+			<div class="space-y-3">
+				<h4 class="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest border-b border-gray-100 dark:border-slate-800 pb-2">Planetary Aspects & Scoring</h4>
+				
+				<div class="space-y-2.5 text-xs">
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Vimshottari Dasha Lord:</span>
+						<span class="font-bold text-gray-900 dark:text-white" x-text="astroDetail.current_mahadasha + ' Mahadasha'"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Sub-Period Lord (Bhukti):</span>
+						<span class="font-bold text-gray-900 dark:text-white" x-text="astroDetail.current_bhukti + ' Bhukti'"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Dasha Period Rating:</span>
+						<span class="font-bold text-indigo-600 dark:text-indigo-400" x-text="astroDetail.details?.dasha_score + ' / 40 points'"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Transits (Jupiter / Venus House):</span>
+						<span class="font-bold text-gray-900 dark:text-white" x-text="'House ' + astroDetail.details?.jup_house + ' / House ' + astroDetail.details?.ven_house"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Saturn Transit House (from Lagna / Moon):</span>
+						<span class="font-bold" :class="[8, 12].includes(astroDetail.details?.sat_house) || [12, 1, 2].includes(astroDetail.details?.sat_moon_house) ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-gray-900 dark:text-white'" x-text="'House ' + astroDetail.details?.sat_house + ' / House ' + astroDetail.details?.sat_moon_house"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Transit Score:</span>
+						<span class="font-bold text-indigo-600 dark:text-indigo-400" x-text="astroDetail.details?.transit_score + ' / 30 points'"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Natal Placements (Jupiter / Venus):</span>
+						<span class="font-bold text-gray-900 dark:text-white" x-text="'House ' + astroDetail.details?.jup_natal_house + ' / House ' + astroDetail.details?.ven_natal_house"></span>
+					</div>
+					<div class="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-slate-800/50">
+						<span class="text-gray-500 dark:text-slate-400">Natal Score:</span>
+						<span class="font-bold text-indigo-600 dark:text-indigo-400" x-text="astroDetail.details?.natal_score + ' / 30 points'"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>

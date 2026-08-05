@@ -40,6 +40,36 @@
 		</button>
 
 		<button
+			@click="setTab('details')"
+			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
+			:class="activeTab === 'details'
+				? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold before:content-[\'\'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-indigo-600 dark:before:bg-indigo-400 before:rounded-r-[3px]'
+				: 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'"
+		>
+			<i data-lucide="file-search" class="w-4 h-4 shrink-0"></i> Details
+		</button>
+
+		<button
+			@click="setTab('swing')"
+			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
+			:class="activeTab === 'swing'
+				? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold before:content-[\'\'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-indigo-600 dark:before:bg-indigo-400 before:rounded-r-[3px]'
+				: 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'"
+		>
+			<i data-lucide="trending-up" class="w-4 h-4 shrink-0"></i> Swing Scanner
+		</button>
+
+		<button
+			@click="setTab('astro_scanner')"
+			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
+			:class="activeTab === 'astro_scanner'
+				? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold before:content-[\'\'] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:bg-indigo-600 dark:before:bg-indigo-400 before:rounded-r-[3px]'
+				: 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'"
+		>
+			<i data-lucide="sparkles" class="w-4 h-4 shrink-0 text-amber-500"></i> Astro Scanner
+		</button>
+
+		<button
 			@click="setTab('egb')"
 			class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors mb-0.5 relative"
 			:class="activeTab === 'egb'

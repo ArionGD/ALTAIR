@@ -11,8 +11,8 @@ class ROICEngine:
     growing revenues.
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_roic(self, ticker_symbol):
         print(f"[*] Auditing Capital Efficiency (ROIC) for {ticker_symbol}...")

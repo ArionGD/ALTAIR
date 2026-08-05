@@ -10,8 +10,8 @@ class EbitdaLeverageEngine:
     A ratio > 4.0 is a Massive Red Flag (The 'Sacrifice' Zone).
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_debt_to_ebitda(self, ticker_symbol):
         print(f"[*] Auditing EBITDA Leverage (Debt/EBITDA) for {ticker_symbol}...")

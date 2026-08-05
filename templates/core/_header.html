@@ -29,9 +29,9 @@
 		</select>
 
 		<button
-			@click="checkHealth(); loadData()"
+			@click="checkHealth(); loadData(); if (activeTab === 'overview') refreshOverviewMarketData();"
 			class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors shadow-sm hidden md:flex"
-			title="Refresh"
+			title="Refresh — on Overview, also force-rescans today's movers and index charts (otherwise those are cached once per day)"
 		>
 			<i data-lucide="refresh-cw" class="w-4 h-4"></i>
 		</button>

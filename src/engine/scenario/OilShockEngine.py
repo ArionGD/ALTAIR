@@ -15,6 +15,13 @@ import pandas as pd
 #   pharma, telecom, beauty/D2C) -> low beta, shock passes through only via
 #   second-order effects (higher inflation/rates), not modeled here.
 OIL_BETA = {
+    # IND market sectors (see DataCollector.py's "markets" dict): Energy's
+    # Upstream sub-sector is oil/gas producers (gain from higher oil, like
+    # Energy_Fossil's Upstream_Integrated below); Downstream is distribution/
+    # fertilizer/power names, second-order exposure only.
+    ("Energy", "Upstream"): -0.9,
+    ("Energy", "Downstream"): -0.3,
+
     ("Energy_Fossil", "Upstream_Integrated"): -0.9,
     ("Energy_Fossil", "Integrated_Majors"): -0.9,
     ("Energy_Fossil", "Downstream_Distribution"): -0.3,
@@ -48,10 +55,20 @@ OIL_BETA = {
     ("BFSI", "Private_Banks"): 0.1,
     ("BFSI", "PSU_NBFC"): 0.1,
 
+    # IND market's "Banking" sector (Bank/NBFC sub-sectors) - same low
+    # fuel-cost linkage as BFSI above, just the new sector name.
+    ("Banking", "Bank"): 0.1,
+    ("Banking", "NBFC"): 0.1,
+
     ("IT_Service", "Global_IT_Services"): 0.05,
     ("IT_Service", "Indian_Offshore_ADR"): 0.05,
     ("IT_Service", "Tier1_IT"): 0.05,
     ("IT_Service", "Tier2_IT"): 0.05,
+
+    # IND market's "IT" sector (Service/Product sub-sectors) - same low
+    # fuel-cost linkage as IT_Service above, just the new sector name.
+    ("IT", "Service"): 0.05,
+    ("IT", "Product"): 0.05,
 
     ("Health", "Pharma"): 0.1,
     ("Health", "Providers_Devices"): 0.1,

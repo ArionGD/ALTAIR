@@ -11,31 +11,49 @@
 	<!-- Charts -->
 	<div class="grid lg:grid-cols-2 gap-5 mb-5">
 		<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
-			<div class="flex items-center gap-3 mb-4">
-				<div class="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
-					<i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+			<div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
+						<i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+					</div>
+					<span class="text-[15px] font-bold text-gray-900 dark:text-white">Nifty 50</span>
 				</div>
-				<span class="text-[15px] font-bold text-gray-900 dark:text-white">Top 10 Strike Scores</span>
+				<div class="flex gap-1.5">
+					<template x-for="p in [['1m','1mo'],['3m','3mo'],['6m','6mo']]" :key="'nifty-' + p[1]">
+						<button
+							@click="loadIndexHistory('nifty', p[1])"
+							class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+							:class="niftyPeriod === p[1] ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'"
+							x-text="p[0]"
+						></button>
+					</template>
+				</div>
 			</div>
 			<div class="h-72" style="height: 18rem;">
-				<canvas
-					x-ref="topChart"
-					x-init="if (rows.length) renderTopChart($el); $watch('rows', () => renderTopChart($el));"
-				></canvas>
+				<canvas x-ref="niftyChart"></canvas>
 			</div>
 		</section>
 		<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
-			<div class="flex items-center gap-3 mb-4">
-				<div class="w-8 h-8 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-					<i data-lucide="pie-chart" class="w-4 h-4"></i>
+			<div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+						<i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+					</div>
+					<span class="text-[15px] font-bold text-gray-900 dark:text-white">Nasdaq Composite</span>
 				</div>
-				<span class="text-[15px] font-bold text-gray-900 dark:text-white">Avg Strike Score by Sector</span>
+				<div class="flex gap-1.5">
+					<template x-for="p in [['1m','1mo'],['3m','3mo'],['6m','6mo']]" :key="'nasdaq-' + p[1]">
+						<button
+							@click="loadIndexHistory('nasdaq', p[1])"
+							class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+							:class="nasdaqPeriod === p[1] ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'"
+							x-text="p[0]"
+						></button>
+					</template>
+				</div>
 			</div>
 			<div class="h-72" style="height: 18rem;">
-				<canvas
-					x-ref="sectorChart"
-					x-init="if (rows.length) renderSectorChart($el); $watch('rows', () => renderSectorChart($el));"
-				></canvas>
+				<canvas x-ref="nasdaqChart"></canvas>
 			</div>
 		</section>
 	</div>

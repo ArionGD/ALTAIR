@@ -37,6 +37,17 @@
 		*::-webkit-scrollbar-thumb { background: #ffffff !important; border-radius: 100px !important; border: 3px solid #0f172a !important; }
 		*::-webkit-scrollbar-thumb:hover { background: #e2e8f0 !important; }
 		html, body, main { scrollbar-width: thin; scrollbar-color: #ffffff #0f172a; }
+
+		/* Overview tab's daily-movers ribbon (Tickertape-style marquee).
+		   Content is rendered twice back-to-back (see _overview.html) and
+		   scrolled exactly -50% so the loop is seamless with no visible jump. */
+		.marquee-track { width: max-content; }
+		.animate-marquee { animation: altair-marquee 90s linear infinite; }
+		.animate-marquee:hover { animation-play-state: paused; }
+		@keyframes altair-marquee {
+			from { transform: translateX(0); }
+			to { transform: translateX(-50%); }
+		}
 	</style>
 </head>
 <body class="bg-gray-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex overflow-hidden">
@@ -50,6 +61,43 @@
 			<p x-show="loadError" x-text="loadError" class="text-rose-600 dark:text-rose-400 text-sm mb-4"></p>
 			<p x-show="auditMessage" x-text="auditMessage" class="text-gray-500 dark:text-slate-500 text-xs mb-4"></p>
 
+			<!-- Daily movers ribbon: Overview-only, sits where "No audit run
+			     yet" appears above, ahead of the KPI stat tiles. -->
+			<section
+				x-show="activeTab === 'overview'"
+				x-init="loadMovers()"
+				class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm py-3 mb-5 transition-all duration-300 overflow-hidden"
+			>
+				<div class="marquee-track flex items-center gap-8" :class="moversLoading || !moversRow.length ? '' : 'animate-marquee'">
+					<template x-if="moversLoading">
+						<span class="text-xs text-gray-400 dark:text-slate-500 px-5 whitespace-nowrap">Loading today's movers…</span>
+					</template>
+					<template x-if="!moversLoading && moversError">
+						<span class="text-xs text-rose-500 dark:text-rose-400 px-5 whitespace-nowrap" x-text="moversError"></span>
+					</template>
+					<!-- Rendered twice back-to-back so the marquee loops seamlessly -->
+					<template x-for="pass in (moversRow.length ? [1, 2] : [])" :key="pass">
+						<div class="flex items-center gap-8 shrink-0">
+							<template x-for="row in moversRow" :key="pass + '-' + row.market + '-' + row.ticker + '-' + row.kind">
+								<div class="flex items-center gap-2 whitespace-nowrap px-2">
+									<span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500" x-text="row.market"></span>
+									<span class="text-sm font-bold text-gray-900 dark:text-white" x-text="row.ticker"></span>
+									<span class="text-sm text-gray-500 dark:text-slate-400" x-text="'₹'.concat(fmt(row.last_price, 2))" x-show="row.market === 'IND'"></span>
+									<span class="text-sm text-gray-500 dark:text-slate-400" x-text="'$'.concat(fmt(row.last_price, 2))" x-show="row.market === 'US'"></span>
+									<span
+										class="text-sm font-bold inline-flex items-center gap-0.5"
+										:class="row.change_pct >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+									>
+										<i :data-lucide="row.change_pct >= 0 ? 'arrow-up' : 'arrow-down'" class="w-3 h-3"></i>
+										<span x-text="fmt(Math.abs(row.change_pct), 2) + '%'"></span>
+									</span>
+								</div>
+							</template>
+						</div>
+					</template>
+				</div>
+			</section>
+
 			<template x-if="activeTab === 'overview'">
 				{% include "core/_overview.html" %}
 			</template>
@@ -60,6 +108,18 @@
 
 			<template x-if="activeTab === 'analytics'">
 				{% include "core/_analytics.html" %}
+			</template>
+
+			<template x-if="activeTab === 'details'">
+				{% include "core/_details.html" %}
+			</template>
+
+			<template x-if="activeTab === 'swing'">
+				{% include "core/_swing.html" %}
+			</template>
+
+			<template x-if="activeTab === 'astro_scanner'">
+				{% include "core/_astro_scanner.html" %}
 			</template>
 
 			<template x-if="activeTab === 'egb'">
@@ -116,6 +176,16 @@
 				detail: {},
 				detailFallback: false,
 				charts: { top: null, sector: null },
+				niftyChart: null,
+				nasdaqChart: null,
+				niftyPeriod: "6mo",
+				nasdaqPeriod: "6mo",
+				_niftyCandles: [],
+				_nasdaqCandles: [],
+				moversRow: [],
+				moversLoading: false,
+				moversError: "",
+				moversLoaded: false,
 				archiveFiles: [],
 				archiveFilesLoaded: false,
 				archiveFilename: "",
@@ -137,15 +207,37 @@
 				egbCompareLabels: [],
 				egbCompareLoading: false,
 				egbCompareError: "",
-				aMarket: "US",
-				aSector: "",
-				aSubSector: "",
-				aBaselinePrice: 80,
-				aTargetPrice: 100,
-				scenarioRows: [],
-				scenarioLoading: false,
-				scenarioError: "",
-				scenarioRan: false,
+				rMarket: "US",
+				rSector: "",
+				rSubSector: "",
+				rTicker: "",
+				rankerRows: [],
+				rankerLoading: false,
+				rankerLoadingMessage: "",
+				_rankerLoadingInterval: null,
+				rankerError: "",
+				rankerRan: false,
+				sMarket: "US",
+				sSector: "",
+				sSubSector: "",
+				sTicker: "",
+				swingRows: [],
+				swingLoading: false,
+				swingLoadingMessage: "",
+				_swingLoadingInterval: null,
+				swingError: "",
+				swingRan: false,
+				detailsTicker: "",
+				detailsContext: { market: null, sector: null, sub_sector: null },
+				detailsData: null,
+				detailsLoading: false,
+				detailsError: "",
+				detailsPeriod: "1y",
+				detailsCandles: [],
+				detailsHistoryLoading: false,
+				detailsHistoryError: "",
+				detailsChart: null,
+				detailsHoverPoint: null,
 				columns: [
 					{ key: "ticker", label: "Ticker" },
 					{ key: "market", label: "Market" },
@@ -162,6 +254,8 @@
 					await this.checkHealth();
 					await this.loadData();
 					await this.pollAudit();
+					this.loadIndexHistory("nifty", this.niftyPeriod);
+					this.loadIndexHistory("nasdaq", this.nasdaqPeriod);
 					this.$nextTick(() => this.refreshIcons());
 				},
 
@@ -174,6 +268,9 @@
 						overview: "Overview",
 						strikes: "Strike List",
 						analytics: "Analytics",
+						swing: "Swing Scanner",
+						astro_scanner: "Astro Scanner",
+						details: "Details",
 						egb: "EGB GlassBox",
 						archive: "Past Analysis",
 						guide: "Guide",
@@ -189,6 +286,9 @@
 					this.$nextTick(() => {
 						if (this.charts.top) this.renderTopChart(this.charts.top.canvas);
 						if (this.charts.sector) this.renderSectorChart(this.charts.sector.canvas);
+						if (this.detailsChart) this.renderDetailsChart();
+						if (this.niftyChart) this.renderIndexChart("nifty", this._niftyCandles);
+						if (this.nasdaqChart) this.renderIndexChart("nasdaq", this._nasdaqCandles);
 					});
 				},
 
@@ -344,6 +444,115 @@
 					});
 				},
 
+				// --- Overview tab: Nifty/Nasdaq index charts ---
+				async loadIndexHistory(indexName, period, force = false) {
+					if (indexName === "nifty") this.niftyPeriod = period;
+					if (indexName === "nasdaq") this.nasdaqPeriod = period;
+					try {
+						// Cached per (index, period) per calendar day on the backend -
+						// force=true (from the header's refresh button) bypasses that
+						// and rescans live. Plain tab/range-button clicks never force.
+						const res = await fetch(`/api/v1/market/index/${indexName}?period=${period}${force ? "&force=true" : ""}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						const candles = data.candles ?? [];
+						if (indexName === "nifty") this._niftyCandles = candles;
+						if (indexName === "nasdaq") this._nasdaqCandles = candles;
+						this.renderIndexChart(indexName, candles);
+					} catch {
+						// Index chart failure is non-critical to the rest of Overview -
+						// fail silently rather than surfacing a whole-page error for a
+						// context widget.
+					}
+				},
+
+				renderIndexChart(indexName, candles) {
+					const canvasRef = indexName === "nifty" ? this.$refs.niftyChart : this.$refs.nasdaqChart;
+					if (!canvasRef) return;
+					const chartKey = indexName === "nifty" ? "niftyChart" : "nasdaqChart";
+					if (this[chartKey]) {
+						this[chartKey].destroy();
+						this[chartKey] = null;
+					}
+					if (!candles.length) return;
+
+					const c = this.chartColors();
+					const isUp = candles.length > 1 && candles[candles.length - 1].close >= candles[0].close;
+					const lineColor = isUp ? (this.isDark ? "#34d399" : "#059669") : c.bar;
+
+					this[chartKey] = new Chart(canvasRef, {
+						type: "line",
+						data: {
+							labels: candles.map((row) => row.date),
+							datasets: [
+								{
+									data: candles.map((row) => row.close),
+									borderColor: lineColor,
+									backgroundColor: "transparent",
+									borderWidth: 1.5,
+									pointRadius: 0,
+									tension: 0.15,
+								},
+							],
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							plugins: {
+								legend: { display: false },
+								tooltip: { callbacks: { label: (ctx) => ` Close: ${ctx.parsed.y.toFixed(2)}` } },
+							},
+							scales: {
+								x: { grid: { display: false }, ticks: { color: c.ticks, maxTicksLimit: 8 } },
+								y: { grid: { color: c.grid }, ticks: { color: c.ticks } },
+							},
+						},
+					});
+				},
+
+				// --- Overview tab: daily movers ribbon ---
+				async loadMovers(force = false) {
+					// moversLoaded guards against re-fetching on every tab
+					// revisit within the same page load - force=true (from the
+					// header refresh button) explicitly overrides that guard,
+					// since the whole point of forcing is to get a fresh scan
+					// even though one already loaded this session.
+					if (this.moversLoaded && !force) return;
+					this.moversLoaded = true;
+					this.moversLoading = true;
+					this.moversError = "";
+					try {
+						// Cached once per calendar day on the backend (see
+						// MarketRoutes.py) - force=true bypasses that and
+						// rescans all 40 headline tickers live.
+						const res = await fetch(`/api/v1/market/movers${force ? "?force=true" : ""}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						const combined = [];
+						for (const market of Object.keys(data)) {
+							for (const row of data[market].gainers ?? []) combined.push({ ...row, kind: "gainer" });
+							for (const row of data[market].losers ?? []) combined.push({ ...row, kind: "loser" });
+						}
+						this.moversRow = combined;
+					} catch (err) {
+						this.moversRow = [];
+						this.moversError = `Could not load today's movers: ${err.message}`;
+					}
+					this.moversLoading = false;
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				// Called by the header's refresh button, only when the Overview
+				// tab is active - force-rescans movers and both index charts,
+				// bypassing the daily cache (a plain tab visit never does this).
+				refreshOverviewMarketData() {
+					this.loadMovers(true);
+					this.loadIndexHistory("nifty", this.niftyPeriod, true);
+					this.loadIndexHistory("nasdaq", this.nasdaqPeriod, true);
+				},
+
 				sortedRows() {
 					const key = this.sortKey;
 					const desc = this.sortDesc;
@@ -372,15 +581,21 @@
 						if (this.egbChart) { this.egbChart.destroy(); this.egbChart = null; }
 						if (this.egbCompareChart) { this.egbCompareChart.destroy(); this.egbCompareChart = null; }
 					}
+					if (this.activeTab === "details" && tab !== "details") {
+						if (this.detailsChart) { this.detailsChart.destroy(); this.detailsChart = null; }
+					}
 					this.activeTab = tab;
 					if (tab === "archive" && !this.archiveFilesLoaded) {
 						this.loadArchiveList();
 					}
-					if (tab === "analytics" && !this.universeLoaded) {
+					if ((tab === "analytics" || tab === "swing") && !this.universeLoaded) {
 						this.loadUniverse();
 					}
 					if (tab === "egb" && !this.egbTiersLoaded) {
 						this.loadEgbTiers();
+					}
+					if (tab === "astro_scanner" && !this.astroLoaded) {
+						this.loadAstroData();
 					}
 					this.$nextTick(() => this.refreshIcons());
 				},
@@ -393,6 +608,14 @@
 					if (this.charts.sector) {
 						this.charts.sector.destroy();
 						this.charts.sector = null;
+					}
+					if (this.niftyChart) {
+						this.niftyChart.destroy();
+						this.niftyChart = null;
+					}
+					if (this.nasdaqChart) {
+						this.nasdaqChart.destroy();
+						this.nasdaqChart = null;
 					}
 				},
 
@@ -427,7 +650,7 @@
 					this.$nextTick(() => this.refreshIcons());
 				},
 
-				// --- Analytics tab: universe drill-down + oil scenario ---
+				// --- Analytics tab: Sector Ranker (fundamental strength) ---
 				async loadUniverse() {
 					if (this.universeLoaded) return;
 					try {
@@ -435,73 +658,415 @@
 						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
 						this.universe = await res.json();
 						this.universeLoaded = true;
-						// Selects always need a valid sector/sub-sector — the scoped
-						// scoring endpoint requires both, there's no "all" option.
-						this.aSector = this.aSectors()[0] ?? "";
-						this.aSubSector = this.aSubSectors()[0] ?? "";
+						// Sector/Category/Company all default to "All" (empty string) —
+						// unlike the old oil-scenario tool, the ranker endpoint accepts
+						// omitted filters at any of these three levels.
 					} catch (err) {
-						this.scenarioError = `Could not load ticker universe: ${err.message}`;
+						this.rankerError = `Could not load ticker universe: ${err.message}`;
 					}
 					this.$nextTick(() => this.refreshIcons());
 				},
 
-				aSectors() {
-					const m = this.universe[this.aMarket];
+				rSectors() {
+					const m = this.universe[this.rMarket];
 					return m ? Object.keys(m) : [];
 				},
 
-				aSubSectors() {
-					const m = this.universe[this.aMarket];
-					if (!m || !this.aSector || !m[this.aSector]) return [];
-					return Object.keys(m[this.aSector]);
+				rSubSectors() {
+					const m = this.universe[this.rMarket];
+					if (!m || !this.rSector || !m[this.rSector]) return [];
+					return Object.keys(m[this.rSector]);
 				},
 
-				onAMarketChange() {
-					this.aSector = this.aSectors()[0] ?? "";
-					this.aSubSector = this.aSubSectors()[0] ?? "";
+				rCompanies() {
+					const m = this.universe[this.rMarket];
+					if (!m || !this.rSector || !this.rSubSector || !m[this.rSector]) return [];
+					return m[this.rSector][this.rSubSector] ?? [];
 				},
 
-				onASectorChange() {
-					this.aSubSector = this.aSubSectors()[0] ?? "";
+				onRMarketChange() {
+					this.rSector = "";
+					this.rSubSector = "";
+					this.rTicker = "";
 				},
 
-				async runOilScenario() {
-					if (!this.aSector || !this.aSubSector) {
-						this.scenarioError = "Pick a sector and sub-sector first.";
-						return;
-					}
-					this.scenarioLoading = true;
-					this.scenarioError = "";
+				onRSectorChange() {
+					this.rSubSector = "";
+					this.rTicker = "";
+				},
+
+				onRCategoryChange() {
+					this.rTicker = "";
+				},
+
+				async runRanker() {
+					this.rankerLoading = true;
+					this.rankerError = "";
+					this._startRankerLoadingMessages();
 					try {
-						const params = new URLSearchParams({
-							baseline_price: this.aBaselinePrice,
-							target_price: this.aTargetPrice,
-							market: this.aMarket,
-							sector: this.aSector,
-							sub_sector: this.aSubSector,
-						});
+						const params = new URLSearchParams({ market: this.rMarket });
+						if (this.rSector) params.set("sector", this.rSector);
+						if (this.rSubSector) params.set("sub_sector", this.rSubSector);
+						if (this.rTicker) params.set("ticker", this.rTicker);
 
-						// Scores just the ~10 tickers in this sub-sector, live — not
-						// the full universe, so this stays fast enough to run inline.
-						const res = await fetch(`/api/v1/scenario/oil?${params.toString()}`);
+						// Fetches and scores live whatever this filter resolves to —
+						// one ticker, one category, a whole sector, or the whole market.
+						const res = await fetch(`/api/v1/rank?${params.toString()}`);
 						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-						this.scenarioRows = await res.json();
-						this.scenarioRan = true;
+						this.rankerRows = await res.json();
+						this.rankerRan = true;
 					} catch (err) {
-						this.scenarioRows = [];
-						this.scenarioError = `Could not run scenario: ${err.message}`;
+						this.rankerRows = [];
+						this.rankerError = `Could not run analysis: ${err.message}`;
 					}
-					this.scenarioLoading = false;
+					this.rankerLoading = false;
+					this._stopRankerLoadingMessages();
 					this.$nextTick(() => this.refreshIcons());
 				},
 
-				verdictClass(verdict) {
-					if (!verdict) return "";
-					if (verdict.startsWith("HARD SHORT")) return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
-					if (verdict.startsWith("TEMPORARY")) return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
-					if (verdict.startsWith("WEAK")) return "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400";
-					if (verdict.startsWith("BENEFICIARY")) return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+				// Rotating status line during a Sector Ranker run - purely
+				// cosmetic (the fetch itself doesn't report per-ticker progress),
+				// meant to make an unavoidable few-second-to-minutes live-fetch
+				// wait feel alive instead of a frozen spinner.
+				_startRankerLoadingMessages() {
+					const messages = [
+						"Waking up the forensic engines…",
+						"Pulling live financials from the exchange…",
+						"Running Z-Score, F-Score, and sector-specific factors…",
+						"Weighing solvency against valuation…",
+						"Cross-checking bailout probability…",
+						"Ranking strongest to weakest…",
+					];
+					let i = 0;
+					this.rankerLoadingMessage = messages[0];
+					this._rankerLoadingInterval = setInterval(() => {
+						i = (i + 1) % messages.length;
+						this.rankerLoadingMessage = messages[i];
+					}, 1800);
+				},
+
+				_stopRankerLoadingMessages() {
+					if (this._rankerLoadingInterval) {
+						clearInterval(this._rankerLoadingInterval);
+						this._rankerLoadingInterval = null;
+					}
+				},
+
+				rankStrengthLabel(score) {
+					if (typeof score !== "number") return "—";
+					if (score < 30) return "STRONG";
+					if (score < 50) return "STABLE";
+					if (score < 70) return "CAUTION";
+					return "WEAK";
+				},
+
+				rankStrengthClass(score) {
+					if (typeof score !== "number") return "";
+					if (score < 30) return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+					if (score < 50) return "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400";
+					if (score < 70) return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
+					return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+				},
+
+				// --- Swing Scanner tab: fundamentals gate + technical timing ---
+				sSectors() {
+					const m = this.universe[this.sMarket];
+					return m ? Object.keys(m) : [];
+				},
+
+				sSubSectors() {
+					const m = this.universe[this.sMarket];
+					if (!m || !this.sSector || !m[this.sSector]) return [];
+					return Object.keys(m[this.sSector]);
+				},
+
+				sCompanies() {
+					const m = this.universe[this.sMarket];
+					if (!m || !this.sSector || !this.sSubSector || !m[this.sSector]) return [];
+					return m[this.sSector][this.sSubSector] ?? [];
+				},
+
+				onSMarketChange() {
+					this.sSector = "";
+					this.sSubSector = "";
+					this.sTicker = "";
+				},
+
+				onSSectorChange() {
+					this.sSubSector = "";
+					this.sTicker = "";
+				},
+
+				onSCategoryChange() {
+					this.sTicker = "";
+				},
+
+				async runSwingScan() {
+					this.swingLoading = true;
+					this.swingError = "";
+					this._startSwingLoadingMessages();
+					try {
+						const params = new URLSearchParams({ market: this.sMarket });
+						if (this.sSector) params.set("sector", this.sSector);
+						if (this.sSubSector) params.set("sub_sector", this.sSubSector);
+						if (this.sTicker) params.set("ticker", this.sTicker);
+
+						// Fetches financials + a year of daily price history live for
+						// whatever this filter resolves to, then classifies each
+						// ticker into LONG SETUP / SHORT SETUP / NO SETUP.
+						const res = await fetch(`/api/v1/swing/scan?${params.toString()}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.swingRows = await res.json();
+						this.swingRan = true;
+					} catch (err) {
+						this.swingRows = [];
+						this.swingError = `Could not run scan: ${err.message}`;
+					}
+					this.swingLoading = false;
+					this._stopSwingLoadingMessages();
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				// Rotating status line during a Swing Scanner run - same purely
+				// cosmetic purpose as the Ranker's version (see runRanker's
+				// _startRankerLoadingMessages).
+				_startSwingLoadingMessages() {
+					const messages = [
+						"Waking up the forensic engines…",
+						"Pulling a year of daily price history…",
+						"Reading trend regime — 50-day vs. 200-day…",
+						"Checking RSI momentum and volume confirmation…",
+						"Gating technicals against fundamental strength…",
+						"Sorting long setups, short setups, and the rest…",
+					];
+					let i = 0;
+					this.swingLoadingMessage = messages[0];
+					this._swingLoadingInterval = setInterval(() => {
+						i = (i + 1) % messages.length;
+						this.swingLoadingMessage = messages[i];
+					}, 1800);
+				},
+
+				_stopSwingLoadingMessages() {
+					if (this._swingLoadingInterval) {
+						clearInterval(this._swingLoadingInterval);
+						this._swingLoadingInterval = null;
+					}
+				},
+
+				swingVerdictClass(verdict) {
+					if (verdict === "LONG SETUP") return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+					if (verdict === "SHORT SETUP") return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
 					return "bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400";
+				},
+
+				// --- Details tab: full single-ticker breakdown + price chart ---
+				viewDetails(ticker, market = null, sector = null, sub_sector = null) {
+					// Entry point used both by the Ranked Report's "View Details"
+					// links (which already know market/sector/sub_sector, so the
+					// sector-specific scorer dispatches correctly - see
+					// DetailRoutes.py) and the Details tab's own manual lookup.
+					this.detailsContext = { market, sector, sub_sector };
+					this.setTab("details");
+					this.loadDetails(ticker);
+				},
+
+				async loadDetails(tickerOverride = null) {
+					const ticker = (tickerOverride ?? this.detailsTicker ?? "").trim();
+					if (!ticker) {
+						this.detailsError = "Enter a ticker symbol.";
+						return;
+					}
+					this.detailsTicker = ticker;
+					this.detailsLoading = true;
+					this.detailsError = "";
+					this.detailsData = null;
+					try {
+						const params = new URLSearchParams();
+						if (this.detailsContext.market) params.set("market", this.detailsContext.market);
+						if (this.detailsContext.sector) params.set("sector", this.detailsContext.sector);
+						if (this.detailsContext.sub_sector) params.set("sub_sector", this.detailsContext.sub_sector);
+
+						const res = await fetch(`/api/v1/ticker/${encodeURIComponent(ticker)}?${params.toString()}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.detailsData = await res.json();
+						await this.loadDetailsHistory(this.detailsPeriod);
+					} catch (err) {
+						this.detailsError = `Could not load details: ${err.message}`;
+					}
+					this.detailsLoading = false;
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				async loadDetailsHistory(period) {
+					if (!this.detailsTicker) return;
+					this.detailsPeriod = period;
+					this.detailsHistoryLoading = true;
+					this.detailsHistoryError = "";
+					try {
+						const res = await fetch(`/api/v1/ticker/${encodeURIComponent(this.detailsTicker)}/history?period=${period}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						const data = await res.json();
+						this.detailsCandles = data.candles ?? [];
+						this.$nextTick(() => this.renderDetailsChart());
+					} catch (err) {
+						this.detailsCandles = [];
+						this.detailsHistoryError = `Could not load price history: ${err.message}`;
+					}
+					this.detailsHistoryLoading = false;
+				},
+
+				detailsRangeStats() {
+					if (!this.detailsCandles.length) return { high: null, low: null, returnsPct: 0 };
+					const closes = this.detailsCandles.map((row) => row.close);
+					const highs = this.detailsCandles.map((row) => row.high);
+					const lows = this.detailsCandles.map((row) => row.low);
+					const first = closes[0];
+					const last = closes[closes.length - 1];
+					return {
+						high: Math.max(...highs),
+						low: Math.min(...lows),
+						returnsPct: first ? ((last - first) / first) * 100 : 0,
+					};
+				},
+
+				// Tickertape-style vertical crosshair: draws a dashed line + dot at
+				// the hovered index, driven entirely by Chart.js's own afterDraw
+				// hook rather than a second overlaid canvas.
+				_detailsCrosshairPlugin() {
+					const self = this;
+					return {
+						id: "detailsCrosshair",
+						afterDraw(chart) {
+							const idx = self._detailsHoverIndex;
+							if (idx === null || idx === undefined) return;
+							const { ctx, chartArea, scales } = chart;
+							const x = scales.x.getPixelForValue(idx);
+							const meta = chart.getDatasetMeta(0);
+							const point = meta.data[idx];
+							if (!point) return;
+
+							ctx.save();
+							ctx.beginPath();
+							ctx.setLineDash([4, 4]);
+							ctx.strokeStyle = self.isDark ? "#475569" : "#cbd5e1";
+							ctx.lineWidth = 1;
+							ctx.moveTo(x, chartArea.top);
+							ctx.lineTo(x, chartArea.bottom);
+							ctx.stroke();
+
+							ctx.setLineDash([]);
+							ctx.beginPath();
+							ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+							ctx.fillStyle = self.chartColors().bar;
+							ctx.fill();
+							ctx.strokeStyle = self.isDark ? "#0f172a" : "#ffffff";
+							ctx.lineWidth = 2;
+							ctx.stroke();
+							ctx.restore();
+						},
+					};
+				},
+
+				renderDetailsChart() {
+					const canvas = document.getElementById("detailsChartCanvas");
+					if (!canvas) return;
+					if (this.detailsChart) {
+						this.detailsChart.destroy();
+						this.detailsChart = null;
+					}
+					if (!this.detailsCandles.length) return;
+
+					const c = this.chartColors();
+					const isUp = this.detailsRangeStats().returnsPct >= 0;
+					const lineColor = isUp ? (this.isDark ? "#34d399" : "#059669") : c.bar;
+
+					this._detailsHoverIndex = null;
+					this.detailsHoverPoint = null;
+
+					this.detailsChart = new Chart(canvas, {
+						type: "line",
+						data: {
+							labels: this.detailsCandles.map((row) => row.date),
+							datasets: [
+								{
+									data: this.detailsCandles.map((row) => row.close),
+									borderColor: lineColor,
+									backgroundColor: (ctx) => {
+										const { chartArea, ctx: canvasCtx } = ctx.chart;
+										if (!chartArea) return "transparent";
+										const gradient = canvasCtx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+										gradient.addColorStop(0, isUp ? "rgba(5,150,105,0.25)" : "rgba(220,38,38,0.2)");
+										gradient.addColorStop(1, isUp ? "rgba(5,150,105,0)" : "rgba(220,38,38,0)");
+										return gradient;
+									},
+									borderWidth: 1.75,
+									pointRadius: 0,
+									pointHoverRadius: 0,
+									tension: 0.15,
+									fill: true,
+								},
+							],
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							animation: false,
+							resizeDelay: 100,
+							interaction: { mode: "index", intersect: false },
+							plugins: {
+								legend: { display: false },
+								tooltip: { enabled: false },
+							},
+							scales: {
+								x: { grid: { display: false }, ticks: { color: c.ticks, maxTicksLimit: 8 } },
+								y: { grid: { color: c.grid }, ticks: { color: c.ticks } },
+							},
+							onHover: (event, elements, chart) => {
+								if (!elements.length) {
+									this._detailsHoverIndex = null;
+									this.detailsHoverPoint = null;
+									chart.draw();
+									return;
+								}
+								const idx = elements[0].index;
+								this._detailsHoverIndex = idx;
+								const row = this.detailsCandles[idx];
+								const point = chart.getDatasetMeta(0).data[idx];
+								this.detailsHoverPoint = { x: point.x, date: row.date, close: row.close };
+								chart.draw();
+							},
+						},
+						plugins: [this._detailsCrosshairPlugin()],
+					});
+
+					canvas.addEventListener("mouseleave", () => {
+						this._detailsHoverIndex = null;
+						this.detailsHoverPoint = null;
+						if (this.detailsChart) this.detailsChart.draw();
+					});
+				},
+
+				detailsVerdictClass(verdict) {
+					if (verdict === "LONG SETUP") return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+					if (verdict === "SHORT SETUP") return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+					return "bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400";
+				},
+
+				fundamentalEntries() {
+					const f = this.detailsData?.fundamental ?? {};
+					// The 7 generic-formula-only fields are None (not "unavailable")
+					// whenever a sector-specific scorer (Banking/Energy/IT) ran
+					// instead - see VulnerabilityRanker.py's scoring_model field.
+					// Showing them as "—" here would look like a data failure, so
+					// they're hidden entirely rather than displayed as blank.
+					const genericOnlyFields = ["z_score", "leverage_ratio", "sloan_ratio", "roic", "m_score", "f_score", "short_float"];
+					const isSectorSpecific = f.scoring_model && f.scoring_model !== "generic";
+					return Object.entries(f).filter(([k]) => {
+						if (["astra_strike_score", "avs_score", "scoring_model"].includes(k)) return false;
+						if (isSectorSpecific && genericOnlyFields.includes(k)) return false;
+						return true;
+					});
 				},
 
 				// --- EGB GlassBox tab: per-tier pattern-finding results ---
@@ -762,6 +1327,47 @@
 				closeDetail() {
 					this.detailTicker = null;
 				},
+
+				// --- Astro Scanner tab ---
+				astroRows: [],
+				astroLoading: false,
+				astroError: "",
+				astroLoaded: false,
+				astroDetailTicker: null,
+				astroDetail: {},
+				astroDetailLoading: false,
+
+				async loadAstroData(force = false) {
+					if (this.astroLoaded && !force) return;
+					this.astroLoading = true;
+					this.astroError = "";
+					try {
+						const res = await fetch(`/api/v1/astro-scanner${force ? "?force=true" : ""}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.astroRows = await res.json();
+						this.astroLoaded = true;
+					} catch (err) {
+						this.astroRows = [];
+						this.astroError = `Could not load astro data: ${err.message}`;
+					}
+					this.astroLoading = false;
+					this.$nextTick(() => this.refreshIcons());
+				},
+
+				async openAstroDetail(ticker) {
+					this.astroDetailTicker = ticker;
+					this.astroDetailLoading = true;
+					this.astroDetail = {};
+					try {
+						const res = await fetch(`/api/v1/astro-scanner/detail/${encodeURIComponent(ticker)}`);
+						if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+						this.astroDetail = await res.json();
+					} catch (err) {
+						this.astroDetail = { ticker, error: err.message };
+					}
+					this.astroDetailLoading = false;
+					this.$nextTick(() => this.refreshIcons());
+				}
 			};
 		}
 	</script>

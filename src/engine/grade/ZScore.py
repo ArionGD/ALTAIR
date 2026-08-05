@@ -11,8 +11,8 @@ class ZScoreEngine:
     - < 1.8: Distress Zone (High Bankruptcy Probability)
     """
 
-    def __init__(self):
-        self.auditor = SovereignAuditor()
+    def __init__(self, auditor=None):
+        self.auditor = auditor or SovereignAuditor()
 
     def calculate_altman_z(self, ticker_symbol):
         print(f"[*] Calculating Sovereign Z-Score for {ticker_symbol}...")

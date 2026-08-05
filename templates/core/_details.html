@@ -1,0 +1,149 @@
+<div>
+	<!-- Ticker lookup -->
+	<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300">
+		<div class="flex items-center gap-3 mb-4">
+			<div class="w-8 h-8 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+				<i data-lucide="file-search" class="w-4 h-4"></i>
+			</div>
+			<span class="text-[15px] font-bold text-gray-900 dark:text-white">Ticker Details</span>
+		</div>
+		<div class="flex flex-col sm:flex-row gap-3">
+			<input
+				type="text"
+				x-model="detailsTicker"
+				@keydown.enter="loadDetails()"
+				placeholder="e.g. TCS.NS or AAPL"
+				class="flex-1 bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-gray-900 dark:text-white"
+			/>
+			<button
+				@click="loadDetails()"
+				:disabled="detailsLoading"
+				class="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-blue-500/20"
+			>
+				<i data-lucide="search" class="w-3.5 h-3.5"></i>
+				<span x-text="detailsLoading ? 'Loading…' : 'Look Up'"></span>
+			</button>
+		</div>
+		<p x-show="detailsError" x-text="detailsError" class="text-rose-600 dark:text-rose-400 text-sm mt-3"></p>
+	</section>
+
+	<template x-if="!detailsData && !detailsLoading">
+		<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+			<div class="py-16 text-center">
+				<div class="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3 mx-auto">
+					<i data-lucide="file-search" class="w-6 h-6 text-gray-300 dark:text-slate-600"></i>
+				</div>
+				<p class="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Look up a ticker, or click "View Details" from the Ranked Report</p>
+			</div>
+		</section>
+	</template>
+
+	<template x-if="detailsData">
+		<div>
+			<!-- Header -->
+			<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300">
+				<div class="flex flex-wrap items-start justify-between gap-3">
+					<div>
+						<h2 class="text-xl font-black text-gray-900 dark:text-white" x-text="detailsData.ticker"></h2>
+						<p class="text-sm text-gray-500 dark:text-slate-400" x-text="detailsData.profile?.long_name ?? '—'"></p>
+						<p class="text-xs text-gray-400 dark:text-slate-500 mt-1">
+							<span x-text="(detailsData.sector ?? detailsData.profile?.sector_label ?? '—')"></span>
+							<span x-show="detailsData.sub_sector"> / <span x-text="detailsData.sub_sector"></span></span>
+						</p>
+					</div>
+					<span class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap" :class="detailsVerdictClass(detailsData.swing_verdict)" x-text="detailsData.swing_verdict"></span>
+				</div>
+			</section>
+
+			<!-- Price chart -->
+			<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 mb-5 transition-all duration-300">
+				<div class="flex items-start justify-between gap-3 mb-4 flex-wrap">
+					<div class="flex gap-6 flex-wrap">
+						<div>
+							<p class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">High</p>
+							<p class="text-sm font-bold text-gray-900 dark:text-white" x-text="detailsCandles.length ? '₹' + fmt(detailsRangeStats().high, 2) : '—'"></p>
+						</div>
+						<div>
+							<p class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">Low</p>
+							<p class="text-sm font-bold text-gray-900 dark:text-white" x-text="detailsCandles.length ? '₹' + fmt(detailsRangeStats().low, 2) : '—'"></p>
+						</div>
+						<div>
+							<p class="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">Returns</p>
+							<p class="text-sm font-bold" :class="detailsRangeStats().returnsPct >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'" x-text="detailsCandles.length ? (detailsRangeStats().returnsPct >= 0 ? '▲ ' : '▼ ') + fmt(Math.abs(detailsRangeStats().returnsPct), 2) + '%' : '—'"></p>
+						</div>
+					</div>
+					<div class="flex gap-1.5 flex-wrap">
+						<template x-for="p in [['1m','1mo'],['6m','6mo'],['1y','1y'],['5y','5y'],['10y','10y']]" :key="p[1]">
+							<button
+								@click="loadDetailsHistory(p[1])"
+								class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+								:class="detailsPeriod === p[1] ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700'"
+								x-text="p[0]"
+							></button>
+						</template>
+					</div>
+				</div>
+				<p x-show="detailsHistoryError" x-text="detailsHistoryError" class="text-rose-600 dark:text-rose-400 text-sm mb-3"></p>
+				<p x-show="!detailsHistoryLoading && !detailsHistoryError && detailsCandles.length === 0" class="text-gray-500 dark:text-slate-500 text-sm py-8 text-center">
+					No price history available for this range.
+				</p>
+				<div class="relative h-80" x-show="detailsCandles.length > 0">
+					<canvas id="detailsChartCanvas"></canvas>
+					<div
+						x-show="detailsHoverPoint"
+						class="absolute pointer-events-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg px-3 py-2 text-xs -translate-x-1/2"
+						:style="{ left: (detailsHoverPoint?.x ?? 0) + 'px', top: '8px' }"
+					>
+						<p class="font-bold text-gray-900 dark:text-white" x-text="detailsHoverPoint ? '₹' + fmt(detailsHoverPoint.close, 2) : ''"></p>
+						<p class="text-gray-400 dark:text-slate-500" x-text="detailsHoverPoint?.date ?? ''"></p>
+					</div>
+				</div>
+			</section>
+
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+				<!-- Fundamental breakdown -->
+				<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400">
+							<i data-lucide="shield" class="w-4 h-4"></i>
+						</div>
+						<span class="text-[15px] font-bold text-gray-900 dark:text-white">Fundamental Breakdown</span>
+					</div>
+					<div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+						<span class="text-sm text-gray-500 dark:text-slate-400">Strike Score</span>
+						<span class="text-lg font-bold text-gray-900 dark:text-white" x-text="fmt(detailsData.fundamental?.astra_strike_score, 1)"></span>
+					</div>
+					<p class="text-xs text-gray-400 dark:text-slate-500 mb-1 pt-2" x-show="detailsData.fundamental?.scoring_model && detailsData.fundamental.scoring_model !== 'generic'">
+						Scored with the <span class="font-semibold" x-text="detailsData.fundamental.scoring_model"></span>-specific formula — see the fields below; the generic Z/F/M-Score factors don't apply to this sector and are omitted rather than shown as unavailable.
+					</p>
+					<template x-for="[k, v] in fundamentalEntries()" :key="k">
+						<div class="flex justify-between gap-4 py-2 border-b border-gray-50 dark:border-slate-800/50 text-sm">
+							<span class="text-gray-500 dark:text-slate-500" x-text="k.replace(/_/g, ' ')"></span>
+							<span class="text-right break-words text-gray-900 dark:text-white" x-text="v === null || v === undefined ? '—' : (typeof v === 'number' ? fmt(v, 2) : v)"></span>
+						</div>
+					</template>
+				</section>
+
+				<!-- Technical breakdown -->
+				<section class="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 shadow-sm p-5 transition-all duration-300">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-gray-500 dark:text-slate-400">
+							<i data-lucide="trending-up" class="w-4 h-4"></i>
+						</div>
+						<span class="text-[15px] font-bold text-gray-900 dark:text-white">Technical Breakdown</span>
+					</div>
+					<div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-800">
+						<span class="text-sm text-gray-500 dark:text-slate-400">Technical Score</span>
+						<span class="text-lg font-bold" :class="detailsData.technical?.technical_score >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'" x-text="fmt(detailsData.technical?.technical_score, 1)"></span>
+					</div>
+					<template x-for="[k, v] in Object.entries(detailsData.technical ?? {}).filter(([k]) => k !== 'technical_score')" :key="k">
+						<div class="flex justify-between gap-4 py-2 border-b border-gray-50 dark:border-slate-800/50 text-sm">
+							<span class="text-gray-500 dark:text-slate-500" x-text="k.replace(/_/g, ' ')"></span>
+							<span class="text-right break-words text-gray-900 dark:text-white" x-text="v === null || v === undefined ? '—' : (typeof v === 'number' ? fmt(v, 2) : v)"></span>
+						</div>
+					</template>
+				</section>
+			</div>
+		</div>
+	</template>
+</div>
