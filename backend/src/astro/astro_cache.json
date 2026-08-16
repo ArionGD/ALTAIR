@@ -95,6 +95,25 @@
           "Ketu": "Leo"
         }
       }
+    },
+    "2026-08-16": {
+      "AAPL": {
+        "CurrentDasha": {
+          "Mahadasha": "Unknown",
+          "Bhukti": "Unknown"
+        },
+        "Transits": {
+          "Sun": null,
+          "Moon": null,
+          "Mars": null,
+          "Mercury": null,
+          "Jupiter": null,
+          "Venus": null,
+          "Saturn": null,
+          "Rahu": null,
+          "Ketu": null
+        }
+      }
     }
   }
 }
