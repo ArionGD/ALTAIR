@@ -1,0 +1,28 @@
+{
+  "tier": "GOLD_10PCT",
+  "r2": -0.0167,
+  "n_train": 2008,
+  "n_test": 502,
+  "date_start": "2016-07-14 00:00:00",
+  "date_end": "2026-07-10 00:00:00",
+  "factors": [
+    {
+      "factor": "oil_return",
+      "mean_abs_shap_impact": 0.00110921380110085,
+      "correlation": 0.635,
+      "direction": "same direction (+)"
+    },
+    {
+      "factor": "fed_funds_rate",
+      "mean_abs_shap_impact": 0.0005858567892573774,
+      "correlation": 0.06,
+      "direction": "same direction (+)"
+    },
+    {
+      "factor": "fed_funds_change",
+      "mean_abs_shap_impact": 5.982336006127298e-05,
+      "correlation": 0.951,
+      "direction": "same direction (+)"
+    }
+  ]
+}

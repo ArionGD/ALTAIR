@@ -1,0 +1,52 @@
+{
+  "tier": "GOLD_40PCT",
+  "r2": 0.0865,
+  "n_train": 1947,
+  "n_test": 487,
+  "date_start": "2016-11-01 00:00:00",
+  "date_end": "2026-07-10 00:00:00",
+  "factors": [
+    {
+      "factor": "real_10y_yield_change",
+      "mean_abs_shap_impact": 0.0024048646446317434,
+      "correlation": -0.936,
+      "direction": "opposite direction (-)"
+    },
+    {
+      "factor": "dollar_index_return",
+      "mean_abs_shap_impact": 0.002238348126411438,
+      "correlation": -0.958,
+      "direction": "opposite direction (-)"
+    },
+    {
+      "factor": "oil_return",
+      "mean_abs_shap_impact": 0.0005769209819845855,
+      "correlation": 0.458,
+      "direction": "same direction (+)"
+    },
+    {
+      "factor": "real_10y_yield",
+      "mean_abs_shap_impact": 0.0005419671651907265,
+      "correlation": -0.328,
+      "direction": "opposite direction (-)"
+    },
+    {
+      "factor": "fed_funds_change_90d",
+      "mean_abs_shap_impact": 0.0003348126192577183,
+      "correlation": 0.194,
+      "direction": "same direction (+)"
+    },
+    {
+      "factor": "fed_funds_rate",
+      "mean_abs_shap_impact": 7.885115337558091e-05,
+      "correlation": -0.067,
+      "direction": "opposite direction (-)"
+    },
+    {
+      "factor": "fed_funds_change",
+      "mean_abs_shap_impact": 3.646957702585496e-05,
+      "correlation": 0.874,
+      "direction": "same direction (+)"
+    }
+  ]
+}
