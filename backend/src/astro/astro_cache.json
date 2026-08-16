@@ -113,6 +113,23 @@
           "Rahu": null,
           "Ketu": null
         }
+      },
+      "RELIANCE.NS": {
+        "CurrentDasha": {
+          "Mahadasha": "Unknown",
+          "Bhukti": "Unknown"
+        },
+        "Transits": {
+          "Sun": null,
+          "Moon": null,
+          "Mars": null,
+          "Mercury": null,
+          "Jupiter": null,
+          "Venus": null,
+          "Saturn": null,
+          "Rahu": null,
+          "Ketu": null
+        }
       }
     }
   }
