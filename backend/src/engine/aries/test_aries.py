@@ -56,6 +56,101 @@ def test_live_valuation():
         except Exception as e:
             print(f"    [!] Exception while evaluating {ticker}: {e}")
 
+def test_upstox_mock():
+    print("\n==================================================")
+    print("Running Mocked Upstox API Parser Checks")
+    print("==================================================")
+    
+    from unittest.mock import patch
+    from src.engine.aries.upstox_client import fetch_upstox_financials
+    
+    mock_ltp = {
+        "status": "success",
+        "data": {
+            "NSE_EQ:RELIANCE": {
+                "last_price": 2400.0,
+                "instrument_token": "NSE_EQ|INE002A01018"
+            }
+        }
+    }
+    
+    mock_bs = {
+        "status": "success",
+        "data": {
+            "history": [
+                {
+                    "total_asset": 150000.0, 
+                    "total_liability": 70000.0,
+                    "period": "Mar 2025"
+                }
+            ]
+        }
+    }
+    
+    mock_inc = {
+        "status": "success",
+        "data": {
+            "income_statement": [
+                {
+                    "category": "revenue",
+                    "history": [{"value": 90000.0}]
+                },
+                {
+                    "category": "net_profit",
+                    "history": [{"value": 15000.0}]
+                },
+                {
+                    "category": "ebit",
+                    "history": [{"value": 20000.0}]
+                }
+            ]
+        }
+    }
+    
+    mock_cf = {
+        "status": "success",
+        "data": {
+            "cash_flow": [
+                {
+                    "category": "operating",
+                    "history": [{"value": 18000.0}]
+                },
+                {
+                    "category": "investing",
+                    "history": [{"value": -6000.0}]
+                }
+            ]
+        }
+    }
+    
+    def side_effect(endpoint, params=None):
+        if "market-quote/ltp" in endpoint:
+            return mock_ltp
+        elif "balance-sheet" in endpoint:
+            return mock_bs
+        elif "income-statement" in endpoint:
+            return mock_inc
+        elif "cash-flow" in endpoint:
+            return mock_cf
+        return {"status": "error"}
+        
+    with patch("src.engine.aries.upstox_client.UPSTOX_ACCESS_TOKEN", "mocked_token"), \
+         patch("src.engine.aries.upstox_client.call_upstox_api", side_effect=side_effect):
+        
+        val = fetch_upstox_financials("RELIANCE.NS")
+        print("[*] Mocked Upstox fetch result:")
+        print("    CMP:", val["cmp"])
+        print("    FCF:", val["fcf_0"])
+        print("    EPS:", val["eps"])
+        print("    Debt:", val["total_debt"])
+        
+        assert val["cmp"] == 2400.0
+        assert val["total_debt"] == 70000.0 * 10000000.0
+        assert val["eps"] == (15000.0 * 10000000.0) / 6760000000.0
+        print("[+] Mocked Upstox API test passed successfully!")
+
 if __name__ == "__main__":
     test_calculations()
+    test_upstox_mock()
     test_live_valuation()
+

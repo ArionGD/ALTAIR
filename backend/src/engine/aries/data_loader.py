@@ -4,9 +4,18 @@ import logging
 logger = logging.getLogger("AriesDataLoader")
 
 def load_financial_data(ticker_symbol: str) -> dict:
-    """Fetches real-time and historical financial metrics using yfinance 
-    and computes input parameters (including WACC) for intrinsic value models.
+    """Fetches real-time and historical financial metrics, first trying Upstox for 
+    Indian stocks (if credentials exist), falling back to yfinance as necessary.
     """
+    from src.engine.aries.upstox_client import fetch_upstox_financials, TICKER_INFO_MAP, UPSTOX_ACCESS_TOKEN
+    
+    if UPSTOX_ACCESS_TOKEN and ticker_symbol in TICKER_INFO_MAP:
+        try:
+            logger.info(f"Attempting Upstox API fetch for Indian stock: {ticker_symbol}")
+            return fetch_upstox_financials(ticker_symbol)
+        except Exception as e:
+            logger.warning(f"Upstox load failed for {ticker_symbol}: {e}. Falling back to yfinance.")
+
     logger.info(f"Loading financial metrics from yfinance for {ticker_symbol}...")
     
     # 1. Initialize ticker
