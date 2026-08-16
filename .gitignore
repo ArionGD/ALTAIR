@@ -14,3 +14,9 @@ data/raw/
 data/processed/
 source/output/
 # Note: Keeping src and api
+
+data/*.db
+*.zip
+frontend/node_modules/
+frontend/dist/
+

@@ -13,3 +13,5 @@ python-dotenv
 alpha_vantage
 textblob
 ddgs
+sqlalchemy
+
