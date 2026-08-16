@@ -1,8 +1,11 @@
 import sys
 import os
+from dotenv import load_dotenv
 
-# Add project root to path
-sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+# Add project root to path and load .env
+PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.append(PROJECT_ROOT)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 from src.engine.aries.aries_engine import run_aries_valuation, calculate_dcf_intrinsic_value
 

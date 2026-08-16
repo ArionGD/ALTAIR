@@ -25,6 +25,7 @@ TICKER_INFO_MAP = {
     "HONASA.NS": {"isin": "INE0J5401028", "symbol": "HONASA", "shares": 323000000.0},
     "CARTRADE.NS": {"isin": "INE290U01011", "symbol": "CARTRADE", "shares": 47000000.0},
     "POLICYBZR.NS": {"isin": "INE417T01026", "symbol": "POLICYBZR", "shares": 450000000.0},
+    "ITC.NS": {"isin": "INE154A01025", "symbol": "ITC", "shares": 12529782031.0},
 }
 
 def call_upstox_api(endpoint: str, params: dict = None) -> dict:
