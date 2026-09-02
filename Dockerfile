@@ -25,7 +25,7 @@ COPY database/ ./database
 COPY advisor/ ./advisor
 COPY quant_lab/ ./quant_lab
 COPY Garud_Quant-lab_logo.png ./
-COPY "Altair Logo.png" ./
+COPY ["Altair Logo.png", "./"]
 
 # Copy built frontend assets from Stage 1
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
