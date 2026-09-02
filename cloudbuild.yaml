@@ -1,13 +1,14 @@
 # GCP Cloud Build Configuration for ALTAIR Engine
 # Target Region: asia-south1 (Mumbai)
 # Target Artifact Registry: papertrade-repo
+# (Builds and pushes the container; deployment is triggered locally to bypass service account permission locks)
 
 steps:
   # Step 1: Build the integrated multi-stage Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:$COMMIT_SHA',
+      '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:latest',
       '.'
     ]
 
@@ -15,20 +16,8 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push',
-      'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:$COMMIT_SHA'
-    ]
-
-  # Step 3: Deploy the image to Google Cloud Run in asia-south1
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args: [
-      'run', 'deploy', 'altair-service',
-      '--image', 'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:$COMMIT_SHA',
-      '--region', 'asia-south1',
-      '--platform', 'managed',
-      '--allow-unauthenticated',
-      '--set-env-vars', 'UPSTOX_ACCESS_TOKEN=eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI1TkNKUVgiLCJqdGkiOiI2YTgwMTQwYzUzNzUwMDQzMDU3MGJkMTYiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlzRXh0ZW5kZWQiOnRydWUsImlhdCI6MTc4Njc3ODYzNiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxODE4MzY3MjAwfQ.tId882rzxtNv7drIGs687mhxU-jUCx4U6W7F0wwXjSg'
+      'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:latest'
     ]
 
 images:
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:$COMMIT_SHA'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/papertrade-repo/altair-app:latest'

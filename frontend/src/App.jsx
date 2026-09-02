@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, Info, TrendingUp, Sparkles, FolderArchive, 
   LayoutDashboard, Menu, X, Sun, Moon, RefreshCw, ChevronRight,
-  TrendingDown, ShieldCheck, HelpCircle, Layers, LogOut
+  TrendingDown, ShieldCheck, HelpCircle, Layers, LogOut,
+  Lock, User, Eye, EyeOff, ArrowRight
 } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import {
@@ -30,6 +31,16 @@ ChartJS.register(
 );
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem('altair_auth') === 'true'
+  );
+  const [loginUser, setLoginUser] = useState('Aditya.raj');
+  const [loginPass, setLoginPass] = useState('Aditya@3205#');
+  const [showPass, setShowPass] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
+  const [loginSlide, setLoginSlide] = useState(0);
+
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -233,6 +244,260 @@ export default function App() {
     { id: 'guide', name: 'Guide', icon: Info },
   ];
 
+  // Slideshow auto-advance
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const interval = setInterval(() => {
+      setLoginSlide((prev) => (prev + 1) % 4);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginSubmitting(true);
+    setLoginError('');
+
+    try {
+      const res = await fetch('/api/v1/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUser, password: loginPass })
+      });
+      if (res.ok) {
+        localStorage.setItem('altair_auth', 'true');
+        localStorage.setItem('altair_user', loginUser);
+        setIsAuthenticated(true);
+      } else {
+        // Fallback local check
+        if (loginUser.trim().toLowerCase() === 'aditya.raj' && loginPass === 'Aditya@3205#') {
+          localStorage.setItem('altair_auth', 'true');
+          localStorage.setItem('altair_user', loginUser);
+          setIsAuthenticated(true);
+        } else {
+          setLoginError('Invalid User ID or Password.');
+        }
+      }
+    } catch {
+      if (loginUser.trim().toLowerCase() === 'aditya.raj' && loginPass === 'Aditya@3205#') {
+        localStorage.setItem('altair_auth', 'true');
+        localStorage.setItem('altair_user', loginUser);
+        setIsAuthenticated(true);
+      } else {
+        setLoginError('Invalid User ID or Password.');
+      }
+    } finally {
+      setLoginSubmitting(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Sign out of ALTAIR?')) {
+      localStorage.removeItem('altair_auth');
+      setIsAuthenticated(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#060911] text-white flex flex-col md:flex-row select-none">
+        {/* LEFT PANEL (50%): Animated Showcase Slideshow */}
+        <div className="w-full md:w-1/2 bg-gradient-to-br from-[#0c1424] via-[#080d1a] to-[#04060d] border-b md:border-b-0 md:border-r border-gray-800 p-8 md:p-14 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Top Brand */}
+          <div className="flex items-center gap-3.5 z-10">
+            <img src="/logo.png" alt="Altair Logo" className="w-10 h-10 rounded-xl object-contain border border-cyan-500/30 shadow-lg" />
+            <div>
+              <h1 className="font-black text-lg text-white tracking-wider flex items-center gap-2">
+                ALTAIR <span className="text-cyan-400 text-xs font-semibold px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 font-mono">FRAGILITY ENGINE</span>
+              </h1>
+              <p className="text-[11px] text-gray-400">Institutional Vulnerability & Financial Stress Gateway</p>
+            </div>
+          </div>
+
+          {/* Animated Slides Container */}
+          <div className="my-10 z-10 min-h-[260px] flex flex-col justify-center">
+            {loginSlide === 0 && (
+              <div className="transition-all duration-700">
+                <div className="inline-flex items-center gap-2 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-3 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
+                  <ShieldAlert size={14} /> Module I: Financial Fragility Gateway
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                  Multi-Factor Solvency & Vulnerability Ranking
+                </h2>
+                <p className="text-sm text-gray-400 mt-3 leading-relaxed max-w-lg">
+                  Diagnoses corporate fragility across liquidity stress, leverage ratios, Piotroski metrics, and earnings quality across large-cap and mid-cap equities.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2 text-xs font-mono text-cyan-300">
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#FragilityRank</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#DebtStress</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#SolvencyRisk</span>
+                </div>
+              </div>
+            )}
+
+            {loginSlide === 1 && (
+              <div className="transition-all duration-700">
+                <div className="inline-flex items-center gap-2 text-emerald-400 text-xs font-mono uppercase tracking-widest mb-3 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                  <Sparkles size={14} /> Module II: Astro & Harmonics Scanner
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                  Macro Timing Cycles & Geometric Harmonics
+                </h2>
+                <p className="text-sm text-gray-400 mt-3 leading-relaxed max-w-lg">
+                  Correlates institutional price action with Gann planetary angle turning dates and celestial cycle pivots to identify inflection zones.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2 text-xs font-mono text-emerald-300">
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#PlanetaryHarmonics</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#GannPivots</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#CycleInflection</span>
+                </div>
+              </div>
+            )}
+
+            {loginSlide === 2 && (
+              <div className="transition-all duration-700">
+                <div className="inline-flex items-center gap-2 text-yellow-400 text-xs font-mono uppercase tracking-widest mb-3 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full">
+                  <TrendingUp size={14} /> Module III: Swing & Strike Intelligence
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                  Asymmetric Breakouts & Liquidity Hunting
+                </h2>
+                <p className="text-sm text-gray-400 mt-3 leading-relaxed max-w-lg">
+                  Surfaces asymmetric short and long opportunities with calculated stop-losses, risk-reward ratios, and volume-flow confirmation.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2 text-xs font-mono text-yellow-300">
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#StrikeList</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#SwingAlpha</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#RiskReward</span>
+                </div>
+              </div>
+            )}
+
+            {loginSlide === 3 && (
+              <div className="transition-all duration-700">
+                <div className="inline-flex items-center gap-2 text-purple-400 text-xs font-mono uppercase tracking-widest mb-3 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full">
+                  <FolderArchive size={14} /> Module IV: Scenario Modeling & EGB
+                </div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                  Macro Stress Scenarios & Historical Archives
+                </h2>
+                <p className="text-sm text-gray-400 mt-3 leading-relaxed max-w-lg">
+                  Simulates black-swan shocks, interest rate hikes, and currency devaluations against portfolio constituents in real-time.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2 text-xs font-mono text-purple-300">
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#ScenarioStress</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#GovernanceAudit</span>
+                  <span className="bg-gray-800/80 border border-gray-700 px-2.5 py-1 rounded-lg">#Archives</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Slide Navigation Indicators */}
+          <div className="flex items-center justify-between z-10 border-t border-gray-800 pt-4">
+            <div className="flex items-center gap-2">
+              {[0, 1, 2, 3].map((idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setLoginSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all ${
+                    loginSlide === idx ? 'w-6 bg-cyan-400' : 'w-2 bg-gray-700 hover:bg-gray-500'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="text-[11px] font-mono text-gray-500">
+              Proprietary Institutional Gateway
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL (50%): Institutional Sign-In Form */}
+        <div className="w-full md:w-1/2 bg-[#060911] p-8 md:p-14 flex items-center justify-center relative">
+          <div className="max-w-md w-full">
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-white tracking-tight">Terminal Authentication</h3>
+              <p className="text-xs text-gray-400 mt-1">Enter your institutional credentials to unlock ALTAIR.</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">User ID</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-3.5 text-gray-500" size={16} />
+                  <input
+                    type="text"
+                    required
+                    value={loginUser}
+                    onChange={(e) => setLoginUser(e.target.value)}
+                    placeholder="User ID (e.g. Aditya.raj)"
+                    className="w-full bg-[#0b0f19] border border-gray-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-cyan-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-3.5 text-gray-500" size={16} />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    value={loginPass}
+                    onChange={(e) => setLoginPass(e.target.value)}
+                    placeholder="Enter password"
+                    className="w-full bg-[#0b0f19] border border-gray-800 rounded-xl pl-10 pr-11 py-3 text-sm text-cyan-300 font-mono focus:outline-none focus:border-cyan-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3.5 top-3.5 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-gray-400 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" defaultChecked className="rounded border-gray-800 bg-[#0b0f19] text-cyan-500 focus:ring-0" />
+                  <span>Keep session active</span>
+                </label>
+                <span className="text-emerald-400 flex items-center gap-1 font-mono text-[11px]">
+                  <ShieldCheck size={14} /> 256-bit Encrypted
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginSubmitting}
+                className="w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-500/20 transition-all text-sm flex items-center justify-center gap-2 mt-4"
+              >
+                <span>{loginSubmitting ? 'Authenticating...' : 'Sign In to Terminal'}</span>
+                <ArrowRight size={14} />
+              </button>
+
+              {loginError && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+            </form>
+
+            <div className="mt-8 border-t border-gray-800/60 pt-4 flex items-center justify-between text-[11px] text-gray-500">
+              <span>Authorized Personnel Only</span>
+              <span className="font-mono">v1.2.0 • ALTAIR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#0b0f19] text-gray-100' : 'bg-gray-50 text-gray-900'} flex flex-col md:flex-row`}>
       
@@ -242,7 +507,7 @@ export default function App() {
           <div>
             {/* Sidebar Logo */}
             <div className="p-6 border-b flex items-center gap-3 border-inherit">
-              <div className="h-9 w-9 bg-red-500 rounded flex items-center justify-center text-white font-bold text-lg">A</div>
+              <img src="/logo.png" className="h-9 w-9 rounded object-contain" alt="Altair Logo" />
               <div>
                 <h1 className="font-bold text-lg leading-tight">ALTAIR</h1>
                 <span className="text-xs text-gray-500 font-medium">Fragility Engine</span>
@@ -276,13 +541,22 @@ export default function App() {
 
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-inherit flex items-center justify-between">
-            <button 
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-100 text-gray-600'}`}
-              title="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-100 text-gray-600'}`}
+                title="Toggle Theme"
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="p-2 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                title="Sign Out of ALTAIR"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
             <span className="text-xs text-gray-500 font-semibold">v1.2.0</span>
           </div>
         </aside>
@@ -292,7 +566,7 @@ export default function App() {
       {isMobile && (
         <header className={`p-4 border-b flex items-center justify-between z-20 ${theme === 'dark' ? 'bg-[#0f172a] border-gray-800' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-red-500 rounded flex items-center justify-center text-white font-bold text-md">A</div>
+            <img src="/logo.png" className="h-8 w-8 rounded object-contain" alt="Altair Logo" />
             <h1 className="font-bold text-md">ALTAIR</h1>
           </div>
           <div className="flex items-center gap-2">

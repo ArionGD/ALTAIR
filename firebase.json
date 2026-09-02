@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "site": "project-ba753270-5762-47c5-ba6",
+    "public": "frontend/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "altair-service",
+          "region": "asia-south1"
+        }
+      }
+    ]
+  }
+}

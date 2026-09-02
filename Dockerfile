@@ -19,9 +19,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend codebase and database folders
+# Copy backend codebase, database, advisor, quant_lab, and assets
 COPY backend/ ./backend
 COPY database/ ./database
+COPY advisor/ ./advisor
+COPY quant_lab/ ./quant_lab
+COPY Garud_Quant-lab_logo.png ./
+COPY "Altair Logo.png" ./
 
 # Copy built frontend assets from Stage 1
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
