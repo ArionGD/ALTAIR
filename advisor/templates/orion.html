@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ALTAIR ORION | Institutional Sector Advisory Terminal</title>
+    <link rel="icon" type="image/png" href="/logo.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#08080a',       /* Deep void base */
+                        darkCard: '#111116',     /* Sleek glass card */
+                        darkBorder: '#27272f',   /* Subtle line */
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <style>
+        html, body {
+            overscroll-behavior: none;
+            overscroll-behavior-y: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { -webkit-tap-highlight-color: transparent; }
+        svg.lucide { display: inline-block; vertical-align: middle; }
+        .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+        
+        /* Glassmorphic Utilities */
+        .glass-panel {
+            background: rgba(17, 17, 22, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-panel-subtle {
+            background: rgba(14, 14, 18, 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glass-specular {
+            position: relative;
+        }
+        .glass-specular::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), rgba(96, 165, 250, 0.3), transparent);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-darkBg text-zinc-100 font-sans min-h-screen flex flex-col select-none antialiased relative overflow-x-hidden">
+
+    <!-- AMBIENT GLASSMORPHIC RADIAL GLOWS (Blue + White Bright Spots) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Top Center Luminous White/Cyan Spot -->
+        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[380px] bg-gradient-to-b from-white/[0.08] via-blue-500/[0.07] to-transparent rounded-full blur-3xl"></div>
+        <!-- Left Side Vibrant Blue Nebula -->
+        <div class="absolute top-24 -left-48 w-[520px] h-[520px] bg-blue-600/[0.12] rounded-full blur-[130px]"></div>
+        <!-- Right Side Cyan / White Shimmer -->
+        <div class="absolute top-1/3 -right-40 w-[480px] h-[480px] bg-cyan-500/[0.09] rounded-full blur-[110px]"></div>
+        <!-- Lower Center Soft Indigo Bright Spot -->
+        <div class="absolute bottom-10 left-1/3 w-[600px] h-[420px] bg-indigo-600/[0.08] rounded-full blur-[120px]"></div>
+    </div>
+
+    <!-- SPLIT-SCREEN AUTHENTICATION MODAL (Phone Stacked / Desktop 50-50) -->
+    <div id="loginModal" class="fixed inset-0 bg-[#08080a]/95 backdrop-blur-2xl z-50 flex flex-col md:flex-row overflow-y-auto select-none">
+        
+        <!-- LEFT PANEL: Institutional Showcase -->
+        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#121218]/90 via-[#0d0d12]/80 to-[#07070a]/90 border-b md:border-b-0 md:border-r border-white/[0.08] p-6 sm:p-8 md:p-14 flex flex-col justify-between relative overflow-hidden">
+            <!-- Radial Bright Spot -->
+            <div class="absolute -top-24 -left-24 w-80 h-80 bg-blue-500/[0.15] rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-80 h-80 bg-white/[0.05] rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Brand Header -->
+            <div class="flex items-center gap-3 z-10">
+                <img src="/logo.png" alt="Orion Logo" class="w-9 h-9 rounded-xl object-contain border border-white/20 shadow-lg shadow-blue-500/10">
+                <div>
+                    <h1 class="font-black text-base text-white tracking-wider flex items-center gap-2">
+                        ALTAIR <span class="text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white/10 border border-white/20 backdrop-blur-md">ORION</span>
+                    </h1>
+                    <p class="text-[10px] sm:text-[11px] text-zinc-400">Institutional Sector Intelligence & Valuation Terminal</p>
+                </div>
+            </div>
+
+            <!-- Showcase Slides -->
+            <div class="my-6 md:my-10 z-10 min-h-[190px] md:min-h-[240px] flex flex-col justify-center">
+                <!-- Slide 0 -->
+                <div id="slide0" class="login-slide transition-all duration-500 opacity-100 transform translate-x-0">
+                    <div class="inline-flex items-center gap-1.5 text-blue-300 text-[10px] font-mono uppercase tracking-widest mb-2 bg-blue-500/10 border border-blue-500/25 px-2.5 py-1 rounded-full backdrop-blur-md">
+                        <i data-lucide="scale" class="w-3.5 h-3.5 text-blue-400"></i> Engine I: Intrinsic DCF
+                    </div>
+                    <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                        Normalized DCF Intrinsic Valuation & Margin of Safety
+                    </h2>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed max-w-lg">
+                        5-year cash flow projections, India-specific 10.5% WACC hurdle, and terminal growth modeling to discover underpriced sector leaders.
+                    </p>
+                </div>
+
+                <!-- Slide 1 -->
+                <div id="slide1" class="login-slide hidden transition-all duration-500 opacity-0 transform translate-x-4">
+                    <div class="inline-flex items-center gap-1.5 text-cyan-300 text-[10px] font-mono uppercase tracking-widest mb-2 bg-cyan-500/10 border border-cyan-500/25 px-2.5 py-1 rounded-full backdrop-blur-md">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 text-cyan-400"></i> Engine II: Top 20 Universes
+                    </div>
+                    <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                        Curated Top 20 Equities Across 10 Core NSE Sectors
+                    </h2>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed max-w-lg">
+                        Pre-screened liquid institutional equities across Pharma, Banks, IT, Auto, FMCG, Energy, Metals, Defense, and Realty.
+                    </p>
+                </div>
+
+                <!-- Slide 2 -->
+                <div id="slide2" class="login-slide hidden transition-all duration-500 opacity-0 transform translate-x-4">
+                    <div class="inline-flex items-center gap-1.5 text-indigo-300 text-[10px] font-mono uppercase tracking-widest mb-2 bg-indigo-500/10 border border-indigo-500/25 px-2.5 py-1 rounded-full backdrop-blur-md">
+                        <i data-lucide="split" class="w-3.5 h-3.5 text-indigo-400"></i> Engine III: Structural Brackets
+                    </div>
+                    <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+                        Immediate S1 Support Floor & R1 Resistance Ceilings
+                    </h2>
+                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed max-w-lg">
+                        Dynamic Camarilla pivots define precise stop-loss floors and profit ceiling targets with structural ATR risk/reward validation.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Slide Dots -->
+            <div class="flex items-center justify-between z-10 border-t border-white/[0.08] pt-3">
+                <div class="flex items-center gap-2">
+                    <button onclick="setSlide(0)" class="slide-dot w-5 h-1.5 rounded-full bg-blue-400 transition-all"></button>
+                    <button onclick="setSlide(1)" class="slide-dot w-2 h-1.5 rounded-full bg-zinc-700 transition-all"></button>
+                    <button onclick="setSlide(2)" class="slide-dot w-2 h-1.5 rounded-full bg-zinc-700 transition-all"></button>
+                </div>
+                <div class="text-[10px] font-mono text-zinc-400">
+                    ORION Advisory Engine
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Institutional Sign-In Form -->
+        <div class="w-full md:w-1/2 p-6 sm:p-10 md:p-14 flex items-center justify-center relative">
+            <div class="max-w-md w-full glass-panel p-6 sm:p-8 rounded-2xl glass-specular">
+                <div class="mb-6">
+                    <div class="inline-block mb-2">
+                        <span class="text-[10px] font-mono uppercase text-blue-300 bg-blue-500/15 border border-blue-500/30 px-2.5 py-0.5 rounded-full">
+                            Terminal Access
+                        </span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-white tracking-tight">ORION Authentication</h3>
+                    <p class="text-xs text-zinc-400 mt-1">Enter your credentials to unlock the advisory terminal.</p>
+                </div>
+
+                <form id="loginForm" onsubmit="event.preventDefault(); handleLoginSubmit(event); return false;" class="space-y-4">
+                    <!-- User ID -->
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">User ID</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400"></i>
+                            <input type="text" id="loginUser" required placeholder="User ID (e.g. Aditya.raj)" value="Aditya.raj"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault(); handleLoginSubmit(event);}"
+                                   class="w-full bg-[#0d0d12]/90 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-blue-400/60 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3.5 text-zinc-400"></i>
+                            <input type="password" id="loginPass" required placeholder="Enter password" value="Aditya@3205#"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault(); handleLoginSubmit(event);}"
+                                   class="w-full bg-[#0d0d12]/90 border border-white/10 rounded-xl pl-10 pr-11 py-3 text-sm text-white font-mono focus:outline-none focus:border-blue-400/60 transition-all">
+                            <button type="button" onclick="togglePassVisibility()" class="absolute right-3.5 top-3.5 text-zinc-400 hover:text-white transition-all cursor-pointer">
+                                <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Session Info -->
+                    <div class="flex items-center justify-between text-xs text-zinc-400 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="rememberMe" checked class="rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-0">
+                            <span>Keep session active</span>
+                        </label>
+                        <span class="text-zinc-300 flex items-center gap-1.5 font-mono text-[11px]">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-400"></i> 256-bit Encrypted
+                        </span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="button" onclick="handleLoginSubmit(event)" id="loginBtn" 
+                            class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all text-sm flex items-center justify-center gap-2 mt-4 cursor-pointer shadow-lg shadow-blue-500/25">
+                        <span>Sign In to ORION</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+
+                    <!-- Error Alert -->
+                    <div id="loginError" class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs hidden flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                        <span id="loginErrorMsg">Invalid User ID or Password.</span>
+                    </div>
+                </form>
+
+                <div class="mt-6 border-t border-white/[0.08] pt-3 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                    <span>Authorized Personnel</span>
+                    <span>v3.2 • ORION</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STICKY TOP HEADER (Logo + ORION Name, Empty Center, Round Profile Pic Button) -->
+    <header class="bg-darkBg/80 backdrop-blur-xl border-b border-white/[0.08] px-4 sm:px-6 py-3 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-md">
+        <!-- Left: Logo + ORION Name -->
+        <div class="flex items-center space-x-2.5 sm:space-x-3">
+            <img src="/logo.png" alt="Orion Logo" class="w-8 h-8 rounded-xl object-contain border border-white/20 shadow-md shadow-blue-500/10">
+            <h1 class="font-black text-sm sm:text-base text-white tracking-wider flex items-center gap-1.5">
+                ALTAIR <span class="text-white font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-blue-500/15 border border-blue-400/30 text-blue-300">ORION</span>
+            </h1>
+        </div>
+
+        <!-- Middle: Empty -->
+        <div class="flex-1"></div>
+
+        <!-- Right: Round-only profile avatar button -->
+        <div class="relative">
+            <button onclick="toggleProfileDropdown()" id="profileAvatarBtn" title="Account Menu"
+                    class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-white/25 hover:border-white/40 flex items-center justify-center text-white font-mono font-bold text-xs shadow-lg shadow-blue-500/20 transition-transform active:scale-95 cursor-pointer backdrop-blur-md">
+                AR
+            </button>
+
+            <!-- Profile Dropdown Card -->
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-64 glass-panel rounded-2xl shadow-2xl p-4 z-50 text-xs space-y-3 glass-specular">
+                <div class="pb-3 border-b border-white/[0.08] flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-mono font-bold text-base shadow-md shadow-blue-500/20">
+                        AR
+                    </div>
+                    <div>
+                        <div class="font-bold text-white text-sm" id="navUserName">Aditya.raj</div>
+                        <div class="text-[11px] text-zinc-400">Lead Quantitative Analyst</div>
+                        <span class="inline-block mt-1 text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono">
+                            Authenticated
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 text-zinc-300 text-[11px] font-mono">
+                    <div class="flex justify-between">
+                        <span class="text-zinc-500">Module:</span>
+                        <span class="text-blue-400 font-semibold">ORION Advisory</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-500">Database:</span>
+                        <span class="text-zinc-300">Supabase Cloud</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-zinc-500">Port:</span>
+                        <span class="text-zinc-300">8085</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-white/[0.08] flex flex-col gap-1.5">
+                    <a href="http://127.0.0.1:8080" target="_blank" class="w-full px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-200 text-xs flex items-center gap-2 transition-all">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5 text-blue-400"></i> Open Quant Lab
+                    </a>
+                    <button onclick="logoutAdvisor()" class="w-full px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs flex items-center gap-2 transition-all cursor-pointer font-semibold">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-400"></i> Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER (Glassmorphic Panels + Bottom Spacing for Phone Navbar) -->
+    <main class="flex-1 p-3 sm:p-5 max-w-7xl mx-auto w-full space-y-4 sm:space-y-5 pb-24 md:pb-6 relative z-10">
+
+        <!-- ========================================== -->
+        <!-- PAGE 1: SECTOR DCF & RANKINGS SCANNER      -->
+        <!-- ========================================== -->
+        <div id="pageSectorScanner" class="space-y-4 sm:space-y-5">
+            
+            <!-- Controls Bar: Sector Selector + Gann Switch -->
+            <section class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-5 space-y-3">
+                <!-- Engine Pre-calc Sync Status Line -->
+                <div class="flex items-center justify-between text-[10px] font-mono text-zinc-400 pb-2 border-b border-white/[0.06]">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="precalcStatusLabel" class="text-zinc-300 font-medium">⚡ Engine Pre-calculated (Instant Cache)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="hidden md:inline text-zinc-500">Scheduled Daily Slots: 09:00 AM • 11:55 AM • 06:00 PM IST (Mon-Fri)</span>
+                        <span id="precalcNextSync" class="text-blue-300 bg-blue-500/10 border border-blue-400/20 px-2 py-0.5 rounded-full">Next Sync: Friday at 09:00 IST</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    
+                    <!-- Dropdown & Gann Toggle -->
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4 flex-1">
+                        <div class="flex-1">
+                            <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Target Sector</span>
+                            <div class="relative">
+                                <select id="sectorSelect" onchange="onSectorSelectChange(this.value)" 
+                                        class="w-full appearance-none bg-[#09090c]/80 border border-white/10 text-zinc-100 text-xs sm:text-sm font-semibold rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:border-blue-400/50 cursor-pointer backdrop-blur-md">
+                                    <option value="Pharma & Healthcare">Pharma & Healthcare (Top 20)</option>
+                                    <option value="Banking - Private">Banking - Private (Top 20)</option>
+                                    <option value="Banking - PSU">Banking - PSU (Top 12)</option>
+                                    <option value="IT & Technology">IT & Technology (Top 20)</option>
+                                    <option value="Automobiles & Ancillaries">Automobiles & Ancillaries (Top 20)</option>
+                                    <option value="Consumer Goods (FMCG)">Consumer Goods - FMCG (Top 20)</option>
+                                    <option value="Energy, Oil & Utilities">Energy, Oil & Utilities (Top 20)</option>
+                                    <option value="Metals & Mining">Metals & Mining (Top 20)</option>
+                                    <option value="Industrials & Defense">Industrials & Defense (Top 20)</option>
+                                    <option value="Real Estate & Infra">Real Estate & Infra (Top 20)</option>
+                                </select>
+                                <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-3 text-zinc-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Gann Cycle Toggle -->
+                        <div class="sm:border-l sm:border-white/[0.08] sm:pl-4 shrink-0">
+                            <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Gann Cycles</span>
+                            <button onclick="toggleGannScoring()" id="btnGannToggle" 
+                                    class="w-full sm:w-auto px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-zinc-300 text-xs font-medium flex items-center justify-between sm:justify-start gap-2 transition-all cursor-pointer backdrop-blur-md">
+                                <span class="flex items-center gap-2">
+                                    <i data-lucide="compass" class="w-3.5 h-3.5 text-zinc-400" id="gannIcon"></i>
+                                    <span id="gannLabel" class="text-xs font-mono">Gann: OFF</span>
+                                </span>
+                                <span class="text-[9px] text-blue-300 font-mono font-bold bg-blue-500/15 border border-blue-400/30 px-1.5 py-0.5 rounded">Toggle</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Utilities: Refresh & CSV -->
+                    <div class="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-white/[0.08]">
+                        <button onclick="refreshData()" title="Refresh Data" class="flex-1 md:flex-none h-9 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-zinc-200 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer backdrop-blur-md">
+                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5 text-blue-400"></i> <span>Refresh</span>
+                        </button>
+                        <button onclick="exportToCsv()" title="Export CSV" class="flex-1 md:flex-none h-9 px-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-blue-500/20">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-white"></i> <span>Export CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Horizontal Quick Chips -->
+                <div class="pt-2 border-t border-white/[0.08] flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-xs" id="quickChipsBar">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- KPI Cards Row (Glassmorphic Glow Panels) -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4" id="kpiCardsContainer">
+                <!-- 1. Valuation Delta -->
+                <div class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Valuation Delta</span>
+                        <i data-lucide="scale" class="w-4 h-4 text-blue-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h3 class="text-lg sm:text-2xl font-black text-white font-mono" id="kpiAvgMoS">--%</h3>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 truncate">Mean Margin of Safety</p>
+                    </div>
+                </div>
+
+                <!-- 2. Top Long Pick -->
+                <div class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Top Long Pick</span>
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h3 class="text-lg sm:text-2xl font-black text-white font-mono truncate" id="kpiTopLongSymbol">--</h3>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 truncate" id="kpiTopLongDetails">Target: --</p>
+                    </div>
+                </div>
+
+                <!-- 3. Prime Short Candidate -->
+                <div class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-rose-400 uppercase tracking-wider">Short / Hedge</span>
+                        <i data-lucide="trending-down" class="w-4 h-4 text-rose-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <h3 class="text-lg sm:text-2xl font-black text-white font-mono truncate" id="kpiTopShortSymbol">--</h3>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 truncate" id="kpiTopShortDetails">Floor: --</p>
+                    </div>
+                </div>
+
+                <!-- 4. Setup Breadth -->
+                <div class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Setup Breadth</span>
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-400"></i>
+                    </div>
+                    <div class="mt-2">
+                        <div class="flex items-center gap-1.5 font-mono text-base sm:text-xl font-bold">
+                            <span class="text-emerald-400" id="kpiLongCount">0L</span>
+                            <span class="text-zinc-600">/</span>
+                            <span class="text-rose-400" id="kpiShortCount">0S</span>
+                        </div>
+                        <p class="text-[9px] text-zinc-400 mt-0.5">Top 20 Curated</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Plotly Visualizer (Glassmorphic Container) -->
+            <section class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-6 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/[0.08] pb-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i>
+                        <h2 class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Valuation & Risk Channel</h2>
+                    </div>
+
+                    <!-- 3 Chart View Switcher Buttons -->
+                    <div class="flex items-center bg-black/40 border border-white/10 rounded-xl p-1 text-xs gap-1 overflow-x-auto no-scrollbar">
+                        <button onclick="switchChartTab('dcf')" id="btnChartDcf" class="px-2.5 py-1 rounded-lg bg-white/15 text-white border border-white/20 font-bold flex items-center gap-1.5 text-xs shrink-0 cursor-pointer shadow-sm">
+                            <i data-lucide="scale" class="w-3.5 h-3.5 text-blue-300"></i> <span>DCF vs CMP</span>
+                        </button>
+                        <button onclick="switchChartTab('matrix')" id="btnChartMatrix" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white border border-transparent font-medium flex items-center gap-1.5 text-xs shrink-0 cursor-pointer">
+                            <i data-lucide="crosshair" class="w-3.5 h-3.5 text-zinc-400"></i> <span>Matrix</span>
+                        </button>
+                        <button onclick="switchChartTab('brackets')" id="btnChartBrackets" class="px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white border border-transparent font-medium flex items-center gap-1.5 text-xs shrink-0 cursor-pointer">
+                            <i data-lucide="split" class="w-3.5 h-3.5 text-zinc-400"></i> <span>S1 / R1</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Plotly Container -->
+                <div class="w-full min-h-[300px] sm:min-h-[420px] relative overflow-hidden rounded-xl bg-black/50 p-1 sm:p-2 border border-white/[0.06]">
+                    <div id="advisorPlotlyBox" class="w-full h-full min-h-[290px] sm:min-h-[400px]">
+                        <div class="flex flex-col items-center justify-center h-full min-h-[280px] text-zinc-400" id="chartLoading">
+                            <i data-lucide="rotate-cw" class="w-6 h-6 animate-spin mb-2 text-blue-400"></i>
+                            <p class="text-xs">Computing DCF intrinsic values, S1/R1 brackets & rankings...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top 20 Ranked Sector Scorecard (Table + Phone Card View) -->
+            <section class="glass-panel glass-specular rounded-2xl p-3.5 sm:p-6 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/[0.08] pb-3">
+                    <div class="flex items-center justify-between sm:justify-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i>
+                            <h2 class="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Sector Scorecard</h2>
+                            <span id="scorecardSectorBadge" class="text-[9px] bg-blue-500/15 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono">Pharma</span>
+                        </div>
+
+                        <!-- Phone View Switcher (Cards vs Table) -->
+                        <div class="flex md:hidden items-center bg-black/40 border border-white/10 rounded-lg p-0.5 text-[10px]">
+                            <button onclick="setMobileViewStyle('cards')" id="mViewCardsBtn" class="px-2 py-0.5 rounded bg-white/15 text-white font-bold">
+                                Cards
+                            </button>
+                            <button onclick="setMobileViewStyle('table')" id="mViewTableBtn" class="px-2 py-0.5 rounded text-zinc-400">
+                                Table
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Buttons + Search -->
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center bg-black/40 border border-white/10 rounded-xl p-1 text-xs gap-1">
+                            <button onclick="filterTable('ALL')" id="filterBtnAll" class="px-2 py-0.5 rounded-lg bg-white/15 text-white font-bold border border-white/20 text-xs cursor-pointer">All (20)</button>
+                            <button onclick="filterTable('LONG')" id="filterBtnLong" class="px-2 py-0.5 rounded-lg text-zinc-400 hover:text-emerald-400 font-medium text-xs flex items-center gap-1 cursor-pointer">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Longs
+                            </button>
+                            <button onclick="filterTable('SHORT')" id="filterBtnShort" class="px-2 py-0.5 rounded-lg text-zinc-400 hover:text-rose-400 font-medium text-xs flex items-center gap-1 cursor-pointer">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Shorts
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <i data-lucide="search" class="w-3 h-3 absolute left-2.5 top-2 text-zinc-400"></i>
+                            <input type="text" id="tableSearchInput" oninput="onSearchInput(this.value)" placeholder="Search..." 
+                                   class="bg-black/50 border border-white/10 rounded-xl pl-7 pr-2.5 py-1 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-400/50 w-24 sm:w-36 font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PHONE CARDS CONTAINER (Visible on Mobile by default) -->
+                <div id="mobileStockCards" class="block md:hidden space-y-2.5">
+                    <!-- Populated dynamically with mobile touch cards -->
+                </div>
+
+                <!-- DESKTOP / ADVANCED TABLE CONTAINER -->
+                <div id="desktopTableContainer" class="hidden md:block overflow-x-auto overflow-y-auto max-h-[520px] w-full border border-white/[0.08] rounded-xl bg-black/30">
+                    <table class="w-full text-left text-xs border-collapse min-w-[850px]">
+                        <thead class="bg-[#0f0f14]/95 sticky top-0 z-10 text-zinc-400 border-b border-white/[0.08] uppercase text-[10px] tracking-wider backdrop-blur">
+                            <tr>
+                                <th class="p-3 whitespace-nowrap">Rank</th>
+                                <th class="p-3 whitespace-nowrap">Company</th>
+                                <th class="p-3 whitespace-nowrap">CMP (₹)</th>
+                                <th class="p-3 whitespace-nowrap">Action Signal</th>
+                                <th class="p-3 whitespace-nowrap">Score</th>
+                                <th class="p-3 whitespace-nowrap">DCF Value</th>
+                                <th class="p-3 whitespace-nowrap">Margin of Safety</th>
+                                <th class="p-3 whitespace-nowrap">P/E</th>
+                                <th class="p-3 whitespace-nowrap">14D RSI</th>
+                                <th class="p-3 whitespace-nowrap">Floor (S1)</th>
+                                <th class="p-3 whitespace-nowrap">Target (R1)</th>
+                                <th class="p-3 whitespace-nowrap">R/R</th>
+                                <th class="p-3 whitespace-nowrap text-center">Watchlist</th>
+                            </tr>
+                        </thead>
+                        <tbody id="advisorTableBody" class="divide-y divide-white/[0.05] font-mono">
+                            <!-- Rows rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-[10px] text-zinc-400 text-right font-mono">ORION Engine • Camarilla S1 Support Floor & R1 Resistance Ceiling</p>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PAGE 2: BI-DIRECTIONAL ALPHA RADAR         -->
+        <!-- ========================================== -->
+        <div id="pageAlphaRadar" class="hidden space-y-4 sm:space-y-5">
+            <div class="glass-panel glass-specular rounded-2xl p-4 sm:p-5">
+                <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="split" class="w-4 h-4 text-blue-400"></i> Bi-Directional Alpha Radar
+                        </h2>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">Top accumulation longs vs overvalued short candidates.</p>
+                    </div>
+                    <span id="alphaSectorBadge" class="text-[10px] font-mono font-bold text-blue-300 px-2.5 py-1 rounded-xl bg-blue-500/15 border border-blue-500/30">Pharma</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                    <!-- LEFT COLUMN: Top Long Opportunities -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Swing Longs (Accumulation)
+                            </h3>
+                            <span class="text-[10px] font-mono text-zinc-400" id="longCardCount">0 Picks</span>
+                        </div>
+                        <div id="longCardsContainer" class="space-y-2.5">
+                            <!-- Dynamic Cards -->
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: Prime Short Opportunities -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs sm:text-sm font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span> Prime Shorts (Overextended)
+                            </h3>
+                            <span class="text-[10px] font-mono text-zinc-400" id="shortCardCount">0 Picks</span>
+                        </div>
+                        <div id="shortCardsContainer" class="space-y-2.5">
+                            <!-- Dynamic Cards -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PAGE 3: W.D. GANN HARMONICS HUB           -->
+        <!-- ========================================== -->
+        <div id="pageGannHub" class="hidden space-y-4 sm:space-y-5">
+            <div class="glass-panel glass-specular rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="compass" class="w-4 h-4 text-blue-400"></i> W.D. Gann Square of 9 Harmonics
+                        </h2>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">Mathematical square roots, cardinal angles (90°, 180°), and vibration pivots.</p>
+                    </div>
+                    <span class="text-[10px] font-mono text-blue-300 px-2.5 py-1 rounded-xl bg-blue-500/15 border border-blue-500/30">Square of 9</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="glass-panel-subtle rounded-xl p-3 sm:p-4">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Cardinal Pivots</span>
+                        <div class="text-lg sm:text-xl font-bold font-mono text-white mt-1">90° / 180° / 270° / 360°</div>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">Major reversal anchors.</p>
+                    </div>
+                    <div class="glass-panel-subtle rounded-xl p-3 sm:p-4">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Fixed Harmonic Angles</span>
+                        <div class="text-lg sm:text-xl font-bold font-mono text-blue-300 mt-1">45° / 135° / 225°</div>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">Intra-cycle vibration points.</p>
+                    </div>
+                    <div class="glass-panel-subtle rounded-xl p-3 sm:p-4">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Turning Window</span>
+                        <div class="text-lg sm:text-xl font-bold font-mono text-emerald-400 mt-1">High Confluence</div>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">Sector leaders cycle sync.</p>
+                    </div>
+                </div>
+
+                <!-- Gann Degree Table -->
+                <div class="overflow-x-auto border border-white/[0.08] rounded-xl bg-black/40">
+                    <table class="w-full text-left text-xs border-collapse min-w-[650px]">
+                        <thead class="bg-[#121218] text-zinc-400 uppercase text-[9px] tracking-wider border-b border-white/[0.08]">
+                            <tr>
+                                <th class="p-3">Leader</th>
+                                <th class="p-3">CMP (₹)</th>
+                                <th class="p-3">Pivot Base</th>
+                                <th class="p-3 text-zinc-300">Gann 45°</th>
+                                <th class="p-3 text-white font-bold">Gann 90°</th>
+                                <th class="p-3 text-zinc-300">Gann 135°</th>
+                                <th class="p-3 text-emerald-400 font-bold">Gann 180°</th>
+                                <th class="p-3">Cycle Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gannTableBody" class="divide-y divide-white/[0.05] font-mono">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PAGE 4: MODEL WATCHLIST BUILDER            -->
+        <!-- ========================================== -->
+        <div id="pageWatchlistBuilder" class="hidden space-y-4 sm:space-y-5">
+            <div class="glass-panel glass-specular rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-white/[0.08]">
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="briefcase" class="w-4 h-4 text-blue-400"></i> Model Watchlist & Basket
+                        </h2>
+                        <p class="text-[11px] text-zinc-400 mt-0.5">Evaluate aggregate portfolio valuation & margin of safety.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearWatchlist()" class="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-zinc-300 hover:text-rose-400 text-xs font-medium transition-all cursor-pointer backdrop-blur-md">
+                            Clear Basket
+                        </button>
+                        <button onclick="exportWatchlistCsv()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-white"></i> <span>Export Basket</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Portfolio Aggregates -->
+                <div class="grid grid-cols-3 gap-2.5 sm:gap-4">
+                    <div class="glass-panel-subtle rounded-xl p-3">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Portfolio MoS</span>
+                        <div class="text-base sm:text-2xl font-black font-mono mt-0.5 text-emerald-400" id="wlAvgMoS">0.0%</div>
+                    </div>
+                    <div class="glass-panel-subtle rounded-xl p-3">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Avg P/E</span>
+                        <div class="text-base sm:text-2xl font-black font-mono mt-0.5 text-white" id="wlAvgPE">0.0</div>
+                    </div>
+                    <div class="glass-panel-subtle rounded-xl p-3">
+                        <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Allocations</span>
+                        <div class="text-base sm:text-2xl font-black font-mono mt-0.5 text-blue-300" id="wlTotalItems">0</div>
+                    </div>
+                </div>
+
+                <!-- Watchlist List -->
+                <div class="overflow-x-auto border border-white/[0.08] rounded-xl bg-black/40">
+                    <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+                        <thead class="bg-[#121218] text-zinc-400 uppercase text-[9px] tracking-wider border-b border-white/[0.08]">
+                            <tr>
+                                <th class="p-3">Symbol</th>
+                                <th class="p-3">Sector</th>
+                                <th class="p-3">CMP (₹)</th>
+                                <th class="p-3">Action</th>
+                                <th class="p-3">DCF Value</th>
+                                <th class="p-3">MoS %</th>
+                                <th class="p-3">P/E</th>
+                                <th class="p-3">S1 Floor</th>
+                                <th class="p-3">R1 Target</th>
+                                <th class="p-3 text-center">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlistTableBody" class="divide-y divide-white/[0.05] font-mono">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/[0.08] py-3 px-4 sm:px-6 text-center text-[10px] text-zinc-400 font-mono mt-6 mb-16 md:mb-0 relative z-10">
+        ALTAIR ORION Terminal • orion.altair-engine.com • Proprietary Quantitative Risk Infrastructure
+    </footer>
+
+    <!-- BOTTOM NAVBAR / FLOATING DOCK (Mobile full-width dock, Desktop floating center dock) -->
+    <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 z-40 bg-darkBg/85 md:bg-darkBg/90 backdrop-blur-xl border-t md:border border-white/[0.12] shadow-[0_-8px_32px_rgba(0,0,0,0.6)] md:shadow-2xl flex items-center justify-around md:justify-center md:gap-3 px-2 py-1.5 md:py-2 md:bottom-5 md:left-1/2 md:-translate-x-1/2 md:w-auto md:min-w-[440px] md:rounded-2xl pb-safe">
+        <!-- Tab 1: Sector DCF -->
+        <button onclick="switchOrionPage('sector_scanner')" id="mBottomBtnScanner" 
+                class="flex flex-col md:flex-row items-center justify-center py-1 md:py-1.5 px-3 md:px-4 rounded-xl text-white font-bold transition-all active:scale-95 cursor-pointer bg-white/10 border border-white/15 shadow-sm md:gap-2">
+            <i data-lucide="pie-chart" class="w-5 h-5 md:w-4 md:h-4 mb-0.5 md:mb-0 text-blue-400"></i>
+            <span class="text-[9px] md:text-xs font-mono tracking-tight">Sector DCF</span>
+        </button>
+
+        <!-- Tab 2: Alpha Radar -->
+        <button onclick="switchOrionPage('alpha_radar')" id="mBottomBtnAlpha" 
+                class="flex flex-col md:flex-row items-center justify-center py-1 md:py-1.5 px-3 md:px-4 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all active:scale-95 cursor-pointer md:gap-2">
+            <i data-lucide="split" class="w-5 h-5 md:w-4 md:h-4 mb-0.5 md:mb-0 text-zinc-400"></i>
+            <span class="text-[9px] md:text-xs font-mono tracking-tight">Alpha Radar</span>
+        </button>
+
+        <!-- Tab 3: Gann Hub -->
+        <button onclick="switchOrionPage('gann_hub')" id="mBottomBtnGann" 
+                class="flex flex-col md:flex-row items-center justify-center py-1 md:py-1.5 px-3 md:px-4 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all active:scale-95 cursor-pointer md:gap-2">
+            <i data-lucide="compass" class="w-5 h-5 md:w-4 md:h-4 mb-0.5 md:mb-0 text-zinc-400"></i>
+            <span class="text-[9px] md:text-xs font-mono tracking-tight">Gann Hub</span>
+        </button>
+
+        <!-- Tab 4: Watchlist -->
+        <button onclick="switchOrionPage('watchlist_builder')" id="mBottomBtnWatchlist" 
+                class="flex flex-col md:flex-row items-center justify-center py-1 md:py-1.5 px-3 md:px-4 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all active:scale-95 cursor-pointer relative md:gap-2">
+            <i data-lucide="briefcase" class="w-5 h-5 md:w-4 md:h-4 mb-0.5 md:mb-0 text-zinc-400"></i>
+            <span class="text-[9px] md:text-xs font-mono tracking-tight">Watchlist</span>
+            <span id="mobileBottomWlBadge" class="absolute -top-0.5 right-1 md:top-1 md:right-1 px-1.5 py-0.2 text-[8px] font-mono font-bold bg-blue-500 text-white rounded-full hidden shadow-sm">0</span>
+        </button>
+    </nav>
+
+    <!-- CLIENT-SIDE JAVASCRIPT -->
+    <script>
+        let currentSector = "Pharma & Healthcare";
+        let isGannEnabled = false;
+        let activeChartTab = "dcf";
+        let currentFilter = "ALL";
+        let activePage = "sector_scanner";
+        let mobileViewStyle = "cards";
+        let rawRankings = [];
+        let currentCharts = {};
+        let currentSlide = 0;
+        let slideTimer = null;
+        let modelWatchlist = JSON.parse(localStorage.getItem("ALTAIR_MODEL_WATCHLIST") || "[]");
+
+        const SECTORS_LIST = [
+            { id: "Pharma & Healthcare", label: "Pharma" },
+            { id: "Banking - Private", label: "Pvt Banks" },
+            { id: "Banking - PSU", label: "PSU Banks" },
+            { id: "IT & Technology", label: "IT & Tech" },
+            { id: "Automobiles & Ancillaries", label: "Auto" },
+            { id: "Consumer Goods (FMCG)", label: "FMCG" },
+            { id: "Energy, Oil & Utilities", label: "Energy" },
+            { id: "Metals & Mining", label: "Metals" },
+            { id: "Industrials & Defense", label: "Defense" },
+            { id: "Real Estate & Infra", label: "Realty" }
+        ];
+
+        // 1. Initialize
+        window.addEventListener("DOMContentLoaded", () => {
+            renderQuickChips();
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+            updateWatchlistBadge();
+            checkAuth();
+            refreshIcons();
+        });
+
+        function refreshIcons() {
+            if (window.lucide && window.lucide.createIcons) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function updateLiveClock() {
+            const now = new Date();
+            const clock = document.getElementById("liveClock");
+            if (clock) clock.innerText = now.toLocaleTimeString();
+        }
+
+        function checkAuth() {
+            const isAuth = localStorage.getItem("ALTAIR_ADVISOR_AUTH") === "true" || localStorage.getItem("ALTAIR_AUTH") === "true";
+            const savedUser = localStorage.getItem("ALTAIR_ADVISOR_USER") || localStorage.getItem("ALTAIR_USER") || "Aditya.raj";
+            
+            const navUser = document.getElementById("navUserName");
+            if (navUser) navUser.innerText = savedUser;
+
+            const modal = document.getElementById("loginModal");
+            if (isAuth) {
+                if (modal) {
+                    modal.classList.add("hidden");
+                    modal.style.display = "none";
+                }
+                loadSectorData(currentSector, isGannEnabled);
+            } else {
+                if (modal) {
+                    modal.classList.remove("hidden");
+                    modal.style.display = "flex";
+                }
+                startSlideTimer();
+            }
+            refreshIcons();
+        }
+
+        // 2. Showcase Slideshow Controls
+        function startSlideTimer() {
+            if (slideTimer) clearInterval(slideTimer);
+            slideTimer = setInterval(() => {
+                nextSlide();
+            }, 4500);
+        }
+
+        function setSlide(idx) {
+            currentSlide = idx;
+            const slides = document.querySelectorAll(".login-slide");
+            const dots = document.querySelectorAll(".slide-dot");
+
+            slides.forEach((s, i) => {
+                if (i === idx) {
+                    s.classList.remove("hidden");
+                    setTimeout(() => {
+                        s.classList.remove("opacity-0", "translate-x-4");
+                        s.classList.add("opacity-100", "translate-x-0");
+                    }, 50);
+                } else {
+                    s.classList.add("opacity-0", "translate-x-4");
+                    s.classList.remove("opacity-100", "translate-x-0");
+                    setTimeout(() => s.classList.add("hidden"), 300);
+                }
+            });
+
+            dots.forEach((d, i) => {
+                if (i === idx) {
+                    d.className = "slide-dot w-5 h-1.5 rounded-full bg-blue-400 transition-all";
+                } else {
+                    d.className = "slide-dot w-2 h-1.5 rounded-full bg-zinc-700 transition-all";
+                }
+            });
+            refreshIcons();
+        }
+
+        function nextSlide() {
+            const total = document.querySelectorAll(".login-slide").length || 3;
+            setSlide((currentSlide + 1) % total);
+        }
+
+        function togglePassVisibility() {
+            const passInput = document.getElementById("loginPass");
+            if (passInput.type === "password") {
+                passInput.type = "text";
+            } else {
+                passInput.type = "password";
+            }
+            refreshIcons();
+        }
+
+        // 3. Login Submission
+        async function handleLoginSubmit(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const user = (document.getElementById("loginUser")?.value || "").trim();
+            const pass = (document.getElementById("loginPass")?.value || "").trim();
+            const errBox = document.getElementById("loginError");
+            const errMsg = document.getElementById("loginErrorMsg");
+            const submitBtn = document.getElementById("loginBtn");
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span>Authenticating...</span>`;
+            }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: user, password: pass})
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem("ALTAIR_ADVISOR_AUTH", "true");
+                    localStorage.setItem("ALTAIR_AUTH", "true");
+                    localStorage.setItem("ALTAIR_ADVISOR_USER", user);
+                    if (slideTimer) clearInterval(slideTimer);
+                    
+                    const modal = document.getElementById("loginModal");
+                    if (modal) {
+                        modal.classList.add("hidden");
+                        modal.style.display = "none";
+                    }
+                    if (errBox) errBox.classList.add("hidden");
+                    
+                    const navUser = document.getElementById("navUserName");
+                    if (navUser) navUser.innerText = user;
+
+                    loadSectorData(currentSector, isGannEnabled);
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    if (errMsg) errMsg.innerText = data.detail || "Invalid User ID or Password.";
+                    if (errBox) errBox.classList.remove("hidden");
+                }
+            } catch (err) {
+                if (errMsg) errMsg.innerText = "Connection error. Please try again.";
+                if (errBox) errBox.classList.remove("hidden");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span>Sign In to ORION</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+                    refreshIcons();
+                }
+            }
+        }
+
+        function toggleProfileDropdown() {
+            const drop = document.getElementById("profileDropdown");
+            if (drop) {
+                drop.classList.toggle("hidden");
+                refreshIcons();
+            }
+        }
+
+        window.addEventListener("click", (e) => {
+            const drop = document.getElementById("profileDropdown");
+            if (drop && !e.target.closest(".relative") && !drop.classList.contains("hidden")) {
+                drop.classList.add("hidden");
+            }
+        });
+
+        function logoutAdvisor() {
+            if (confirm("Sign out of ALTAIR ORION Terminal?")) {
+                localStorage.removeItem("ALTAIR_ADVISOR_AUTH");
+                localStorage.removeItem("ALTAIR_AUTH");
+                location.reload();
+            }
+        }
+
+        // 4. Page Switching (Updates Both Sub-Header Tabs and Mobile Bottom Navbar)
+        function switchOrionPage(page) {
+            activePage = page;
+            const pages = ["sector_scanner", "alpha_radar", "gann_hub", "watchlist_builder"];
+            pages.forEach(p => {
+                const el = document.getElementById("page" + p.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''));
+                const btn = document.getElementById("navBtn" + (p === "sector_scanner" ? "Scanner" : (p === "alpha_radar" ? "Alpha" : (p === "gann_hub" ? "Gann" : "Watchlist"))));
+                const bottomBtn = document.getElementById("mBottomBtn" + (p === "sector_scanner" ? "Scanner" : (p === "alpha_radar" ? "Alpha" : (p === "gann_hub" ? "Gann" : "Watchlist"))));
+
+                if (el) el.classList.toggle("hidden", p !== page);
+                
+                // Desktop sub-header buttons
+                if (btn) {
+                    if (p === page) {
+                        btn.className = "px-3 py-1.5 rounded-xl bg-white/[0.1] text-white border border-white/20 font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-sm";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.07] text-zinc-400 hover:text-white font-medium flex items-center gap-1.5 transition-all shrink-0 cursor-pointer";
+                    }
+                }
+
+                // Mobile bottom navbar buttons
+                if (bottomBtn) {
+                    const icon = bottomBtn.querySelector("i, svg");
+                    if (p === page) {
+                        bottomBtn.className = "flex flex-col items-center justify-center py-1 px-3 rounded-xl text-white font-bold transition-all active:scale-95 cursor-pointer bg-white/10 border border-white/15 shadow-sm";
+                        if (icon) {
+                            icon.classList.remove("text-zinc-400");
+                            icon.classList.add("text-blue-400");
+                        }
+                    } else {
+                        bottomBtn.className = "flex flex-col items-center justify-center py-1 px-3 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all active:scale-95 cursor-pointer";
+                        if (icon) {
+                            icon.classList.remove("text-blue-400");
+                            icon.classList.add("text-zinc-400");
+                        }
+                    }
+                }
+            });
+
+            if (page === "sector_scanner") {
+                renderActiveChart();
+            } else if (page === "alpha_radar") {
+                renderAlphaRadarCards();
+            } else if (page === "gann_hub") {
+                renderGannHubTable();
+            } else if (page === "watchlist_builder") {
+                renderWatchlistTable();
+            }
+            refreshIcons();
+        }
+
+        // 5. Mobile Card vs Table Toggle
+        function setMobileViewStyle(style) {
+            mobileViewStyle = style;
+            const cardsEl = document.getElementById("mobileStockCards");
+            const tableEl = document.getElementById("desktopTableContainer");
+            const cardsBtn = document.getElementById("mViewCardsBtn");
+            const tableBtn = document.getElementById("mViewTableBtn");
+
+            if (style === "cards") {
+                cardsEl.classList.remove("hidden");
+                cardsEl.classList.add("block");
+                tableEl.classList.add("hidden");
+                tableEl.classList.remove("block");
+                cardsBtn.className = "px-2 py-0.5 rounded bg-white/15 text-white font-bold";
+                tableBtn.className = "px-2 py-0.5 rounded text-zinc-400";
+            } else {
+                cardsEl.classList.add("hidden");
+                cardsEl.classList.remove("block");
+                tableEl.classList.remove("hidden");
+                tableEl.classList.add("block");
+                tableBtn.className = "px-2 py-0.5 rounded bg-white/15 text-white font-bold";
+                cardsBtn.className = "px-2 py-0.5 rounded text-zinc-400";
+            }
+            refreshIcons();
+        }
+
+        // 6. Quick Chips & Sector Handling
+        function renderQuickChips() {
+            const bar = document.getElementById("quickChipsBar");
+            if (!bar) return;
+            let html = "";
+            SECTORS_LIST.forEach(s => {
+                const isActive = s.id === currentSector;
+                const activeClass = isActive 
+                    ? "bg-blue-500/20 text-blue-300 border-blue-500/40 font-bold shadow-sm" 
+                    : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white border-white/[0.08]";
+                html += `
+                    <button onclick="onSectorSelectChange('${s.id}')" 
+                            class="px-2.5 py-1 rounded-lg border ${activeClass} transition-all shrink-0 flex items-center gap-1.5 cursor-pointer font-mono text-[11px] backdrop-blur-md">
+                        <span>${s.label}</span>
+                    </button>
+                `;
+            });
+            bar.innerHTML = html;
+        }
+
+        function onSectorSelectChange(sec) {
+            currentSector = sec;
+            const select = document.getElementById("sectorSelect");
+            if (select) select.value = sec;
+            renderQuickChips();
+            loadSectorData(currentSector, isGannEnabled);
+        }
+
+        function toggleGannScoring() {
+            isGannEnabled = !isGannEnabled;
+            const btn = document.getElementById("btnGannToggle");
+            const lbl = document.getElementById("gannLabel");
+
+            if (isGannEnabled) {
+                btn.className = "w-full sm:w-auto px-3 py-2 rounded-xl bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold flex items-center justify-between sm:justify-start gap-2 transition-all cursor-pointer shadow-sm";
+                lbl.innerText = "Gann: ON (Boosted)";
+            } else {
+                btn.className = "w-full sm:w-auto px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-zinc-300 text-xs font-medium flex items-center justify-between sm:justify-start gap-2 transition-all cursor-pointer";
+                lbl.innerText = "Gann: OFF";
+            }
+            loadSectorData(currentSector, isGannEnabled);
+            refreshIcons();
+        }
+
+        async function loadSectorData(sector, includeGann) {
+            const badge = document.getElementById("scorecardSectorBadge");
+            if (badge) badge.innerText = sector;
+            const alphaBadge = document.getElementById("alphaSectorBadge");
+            if (alphaBadge) alphaBadge.innerText = sector;
+
+            const tableBody = document.getElementById("advisorTableBody");
+            const mobileCards = document.getElementById("mobileStockCards");
+
+            if (tableBody) {
+                tableBody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-zinc-400 font-mono"><i data-lucide="rotate-cw" class="w-5 h-5 animate-spin mr-2 inline text-blue-400"></i> Calculating DCF, S1/R1, and rankings for ${sector}...</td></tr>`;
+            }
+            if (mobileCards) {
+                mobileCards.innerHTML = `<div class="p-6 text-center text-zinc-400 text-xs font-mono"><i data-lucide="rotate-cw" class="w-4 h-4 animate-spin mr-1.5 inline text-blue-400"></i> Scanning ${sector}...</div>`;
+            }
+            refreshIcons();
+
+            try {
+                const res = await fetch(`/api/scan?sector=${encodeURIComponent(sector)}&include_gann=${includeGann}`);
+                if (!res.ok) throw new Error("Error loading sector scan");
+                const data = await res.json();
+
+                if (data.last_sync_ist) {
+                    const statusLbl = document.getElementById("precalcStatusLabel");
+                    if (statusLbl) statusLbl.innerText = `⚡ Engine Pre-calculated: ${data.last_sync_ist}`;
+                }
+                if (data.next_sync_ist) {
+                    const nextLbl = document.getElementById("precalcNextSync");
+                    if (nextLbl) nextLbl.innerText = `Next Sync: ${data.next_sync_ist}`;
+                }
+
+                rawRankings = data.rankings || [];
+                currentCharts = data.charts || {};
+
+                updateKPIs(data.kpis);
+                renderTableAndCards(rawRankings);
+                renderActiveChart();
+                renderAlphaRadarCards();
+                renderGannHubTable();
+            } catch (err) {
+                console.error(err);
+                if (tableBody) tableBody.innerHTML = `<tr><td colspan="13" class="p-6 text-center text-rose-400 font-mono">Error connecting to ORION engine. Please retry.</td></tr>`;
+                if (mobileCards) mobileCards.innerHTML = `<div class="p-6 text-center text-rose-400 text-xs font-mono">Error connecting to ORION engine. Please retry.</div>`;
+            }
+            refreshIcons();
+        }
+
+        function updateKPIs(kpis) {
+            if (!kpis) return;
+            const mosEl = document.getElementById("kpiAvgMoS");
+            if (mosEl) {
+                const val = kpis.avg_margin_of_safety || 0;
+                mosEl.innerText = (val > 0 ? "+" : "") + val + "%";
+                mosEl.className = "text-lg sm:text-2xl font-black mt-1 font-mono " + (val >= 0 ? "text-emerald-400" : "text-rose-400");
+            }
+
+            const longSym = document.getElementById("kpiTopLongSymbol");
+            const longDet = document.getElementById("kpiTopLongDetails");
+            if (kpis.top_long) {
+                if (longSym) longSym.innerText = kpis.top_long.symbol;
+                if (longDet) longDet.innerText = `Target: ₹${kpis.top_long.r1_resistance} • MoS: +${kpis.top_long.margin_of_safety_pct}%`;
+            } else {
+                if (longSym) longSym.innerText = "None";
+                if (longDet) longDet.innerText = "No strong long";
+            }
+
+            const shortSym = document.getElementById("kpiTopShortSymbol");
+            const shortDet = document.getElementById("kpiTopShortDetails");
+            if (kpis.top_short) {
+                if (shortSym) shortSym.innerText = kpis.top_short.symbol;
+                if (shortDet) shortDet.innerText = `Floor: ₹${kpis.top_short.s1_support} • MoS: ${kpis.top_short.margin_of_safety_pct}%`;
+            } else {
+                if (shortSym) shortSym.innerText = "None";
+                if (shortDet) shortDet.innerText = "No short candidate";
+            }
+
+            const lCount = document.getElementById("kpiLongCount");
+            const sCount = document.getElementById("kpiShortCount");
+            if (lCount) lCount.innerText = `${kpis.long_count || 0}L`;
+            if (sCount) sCount.innerText = `${kpis.short_count || 0}S`;
+        }
+
+        function switchChartTab(tab) {
+            activeChartTab = tab;
+            const tabs = ["dcf", "matrix", "brackets"];
+            tabs.forEach(t => {
+                const btn = document.getElementById("btnChart" + t.charAt(0).toUpperCase() + t.slice(1));
+                if (btn) {
+                    if (t === tab) {
+                        btn.className = "px-2.5 py-1 rounded-lg bg-white/15 text-white border border-white/20 font-bold flex items-center gap-1.5 text-xs shrink-0 cursor-pointer shadow-sm";
+                    } else {
+                        btn.className = "px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white border border-transparent font-medium flex items-center gap-1.5 text-xs shrink-0 cursor-pointer";
+                    }
+                }
+            });
+            renderActiveChart();
+            refreshIcons();
+        }
+
+        function renderActiveChart() {
+            const chartData = currentCharts[activeChartTab];
+            if (!chartData) return;
+
+            chartData.layout = chartData.layout || {};
+            chartData.layout.autosize = true;
+            chartData.layout.paper_bgcolor = "rgba(0,0,0,0)";
+            chartData.layout.plot_bgcolor = "rgba(10,10,14,0.6)";
+            
+            // Adjust margin for mobile
+            const isMobile = window.innerWidth < 768;
+            chartData.layout.margin = isMobile 
+                ? { l: 28, r: 12, t: 28, b: 24 } 
+                : (chartData.layout.margin || { l: 45, r: 25, t: 45, b: 35 });
+
+            Plotly.react("advisorPlotlyBox", chartData.data, chartData.layout, {
+                responsive: true,
+                displayModeBar: !isMobile,
+                displaylogo: false
+            });
+            setTimeout(() => { Plotly.Plots.resize("advisorPlotlyBox"); }, 100);
+        }
+
+        function filterTable(type) {
+            currentFilter = type;
+            const btnAll = document.getElementById("filterBtnAll");
+            const btnLong = document.getElementById("filterBtnLong");
+            const btnShort = document.getElementById("filterBtnShort");
+
+            btnAll.className = type === 'ALL' ? "px-2 py-0.5 rounded-lg bg-white/15 text-white font-bold border border-white/20 text-xs cursor-pointer" : "px-2 py-0.5 rounded-lg text-zinc-400 hover:text-white font-medium text-xs cursor-pointer";
+            btnLong.className = type === 'LONG' ? "px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30 text-xs flex items-center gap-1 cursor-pointer" : "px-2 py-0.5 rounded-lg text-zinc-400 hover:text-emerald-400 font-medium text-xs flex items-center gap-1 cursor-pointer";
+            btnShort.className = type === 'SHORT' ? "px-2 py-0.5 rounded-lg bg-rose-500/15 text-rose-400 font-bold border border-rose-500/30 text-xs flex items-center gap-1 cursor-pointer" : "px-2 py-0.5 rounded-lg text-zinc-400 hover:text-rose-400 font-medium text-xs flex items-center gap-1 cursor-pointer";
+
+            applyFiltersAndRender();
+        }
+
+        function onSearchInput(query) {
+            applyFiltersAndRender();
+        }
+
+        function applyFiltersAndRender() {
+            const query = (document.getElementById("tableSearchInput")?.value || "").toLowerCase().trim();
+            let filtered = rawRankings;
+
+            if (currentFilter !== "ALL") {
+                filtered = filtered.filter(r => r.action_type === currentFilter);
+            }
+
+            if (query) {
+                filtered = filtered.filter(r => r.symbol.toLowerCase().includes(query) || r.ticker.toLowerCase().includes(query));
+            }
+
+            renderTableAndCards(filtered);
+        }
+
+        // 7. Render Both Mobile Cards and Desktop Table
+        function renderTableAndCards(stocks) {
+            renderDesktopTable(stocks);
+            renderMobileCards(stocks);
+            refreshIcons();
+        }
+
+        function renderMobileCards(stocks) {
+            const container = document.getElementById("mobileStockCards");
+            if (!container) return;
+
+            if (stocks.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-zinc-500 text-xs font-mono">No equities match criteria.</div>`;
+                return;
+            }
+
+            let html = "";
+            stocks.forEach(r => {
+                const mosColor = r.margin_of_safety_pct > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+                const mosPrefix = r.margin_of_safety_pct > 0 ? "+" : "";
+
+                const isInWl = modelWatchlist.some(w => w.symbol === r.symbol);
+                const wlBtnClass = isInWl ? "text-amber-400 bg-amber-500/15 border-amber-500/30" : "text-zinc-400 bg-white/[0.04] border-white/10";
+
+                let actionBadge = "";
+                if (r.action_type === "LONG") {
+                    actionBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>${r.action}</span>`;
+                } else if (r.action_type === "SHORT") {
+                    actionBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>${r.action}</span>`;
+                } else {
+                    actionBadge = `<span class="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-white/10 text-zinc-300 border border-white/15">${r.action}</span>`;
+                }
+
+                html += `
+                    <div class="glass-panel-subtle rounded-xl p-3 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-mono text-zinc-500">#${r.rank}</span>
+                                <span class="font-bold text-white text-xs font-mono">${r.symbol}</span>
+                                <span class="font-mono text-white text-xs font-bold">₹${r.cmp}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                ${actionBadge}
+                                <button onclick="toggleWatchlistStock('${r.symbol}')" class="p-1 rounded-lg border ${wlBtnClass} cursor-pointer text-[11px]" title="Bookmark">
+                                    <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 text-[10px] font-mono bg-black/40 p-2 rounded-lg border border-white/[0.06]">
+                            <div>
+                                <span class="text-zinc-500 block text-[8px] uppercase">DCF Value</span>
+                                <span class="text-white font-bold">₹${r.dcf_intrinsic_value}</span>
+                            </div>
+                            <div>
+                                <span class="text-zinc-500 block text-[8px] uppercase">Margin Safety</span>
+                                <span class="${mosColor}">${mosPrefix}${r.margin_of_safety_pct}%</span>
+                            </div>
+                            <div>
+                                <span class="text-zinc-500 block text-[8px] uppercase">P/E Ratio</span>
+                                <span class="text-zinc-300">${r.pe_ratio}x</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-0.5">
+                            <div>Floor (S1): <span class="text-emerald-400 font-bold">₹${r.s1_support}</span></div>
+                            <div>Target (R1): <span class="text-blue-300 font-bold">₹${r.r1_resistance}</span></div>
+                            <div>R/R: <span class="text-zinc-300 font-bold">${r.risk_reward}x</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderDesktopTable(stocks) {
+            const tbody = document.getElementById("advisorTableBody");
+            if (!tbody) return;
+
+            if (stocks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-zinc-500 font-mono">No equities match the selected filter criteria.</td></tr>`;
+                return;
+            }
+
+            let html = "";
+            stocks.forEach((r, idx) => {
+                const bg = idx % 2 === 0 ? "bg-white/[0.02]" : "bg-transparent";
+                
+                let actionBadge = "";
+                if (r.action_type === "LONG") {
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>${r.action}</span>`;
+                } else if (r.action_type === "SHORT") {
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>${r.action}</span>`;
+                } else {
+                    actionBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/10 text-zinc-300 border border-white/15 flex items-center gap-1 w-fit">${r.action}</span>`;
+                }
+
+                const mosColor = r.margin_of_safety_pct > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+                const mosPrefix = r.margin_of_safety_pct > 0 ? "+" : "";
+
+                const isInWl = modelWatchlist.some(w => w.symbol === r.symbol);
+                const wlBtnClass = isInWl ? "text-amber-400 bg-amber-500/15 border-amber-500/30" : "text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.09] border-white/10";
+
+                html += `
+                    <tr class="${bg} hover:bg-white/[0.05] transition-colors font-mono">
+                        <td class="p-3 whitespace-nowrap text-zinc-500">#${r.rank}</td>
+                        <td class="p-3 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full ${r.action_type === 'LONG' ? 'bg-emerald-400' : (r.action_type === 'SHORT' ? 'bg-rose-400' : 'bg-zinc-400')}"></span>
+                                <span class="font-bold text-white text-xs">${r.symbol}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 whitespace-nowrap text-white font-bold">₹${r.cmp}</td>
+                        <td class="p-3 whitespace-nowrap font-sans">${actionBadge}</td>
+                        <td class="p-3 whitespace-nowrap font-bold text-zinc-200 bg-white/[0.06] px-2 py-0.5 rounded border border-white/10 text-center w-fit">${r.composite_score}</td>
+                        <td class="p-3 whitespace-nowrap text-zinc-300">₹${r.dcf_intrinsic_value}</td>
+                        <td class="p-3 whitespace-nowrap ${mosColor}">${mosPrefix}${r.margin_of_safety_pct}%</td>
+                        <td class="p-3 whitespace-nowrap text-zinc-300">${r.pe_ratio}</td>
+                        <td class="p-3 whitespace-nowrap text-zinc-300">${r.rsi_14}</td>
+                        <td class="p-3 whitespace-nowrap text-emerald-400">₹${r.s1_support}</td>
+                        <td class="p-3 whitespace-nowrap text-blue-300">₹${r.r1_resistance}</td>
+                        <td class="p-3 whitespace-nowrap text-zinc-300 font-semibold">${r.risk_reward}x</td>
+                        <td class="p-3 whitespace-nowrap text-center">
+                            <button onclick="toggleWatchlistStock('${r.symbol}')" class="p-1.5 rounded-lg border ${wlBtnClass} transition-all cursor-pointer text-xs" title="Bookmark">
+                                <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // 8. Alpha Radar Cards
+        function renderAlphaRadarCards() {
+            const longContainer = document.getElementById("longCardsContainer");
+            const shortContainer = document.getElementById("shortCardsContainer");
+            const longBadge = document.getElementById("longCardCount");
+            const shortBadge = document.getElementById("shortCardCount");
+
+            const longs = rawRankings.filter(r => r.action_type === 'LONG');
+            const shorts = rawRankings.filter(r => r.action_type === 'SHORT');
+
+            if (longBadge) longBadge.innerText = `${longs.length} Picks`;
+            if (shortBadge) shortBadge.innerText = `${shorts.length} Picks`;
+
+            if (longContainer) {
+                if (longs.length === 0) {
+                    longContainer.innerHTML = `<div class="p-4 rounded-xl bg-black/40 border border-white/10 text-zinc-500 text-center text-xs font-mono">No high-conviction long setups in ${currentSector}.</div>`;
+                } else {
+                    let html = "";
+                    longs.forEach(r => {
+                        html += `
+                            <div class="glass-panel-subtle hover:border-blue-500/40 rounded-xl p-3 sm:p-4 shadow-sm transition-all space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded font-mono font-bold text-xs bg-white/10 text-white border border-white/15">${r.symbol}</span>
+                                        <span class="text-xs font-mono font-bold text-white">₹${r.cmp}</span>
+                                    </div>
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">${r.action}</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-[10px] font-mono border-t border-white/[0.08] pt-1.5 text-zinc-300">
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">DCF Fair</span>₹${r.dcf_intrinsic_value}</div>
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">MoS %</span><span class="text-emerald-400 font-bold">+${r.margin_of_safety_pct}%</span></div>
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">Risk/Reward</span><span class="text-blue-300 font-bold">${r.risk_reward}x</span></div>
+                                </div>
+                                <div class="flex items-center justify-between text-[10px] font-mono bg-black/40 p-2 rounded-lg border border-white/[0.06]">
+                                    <div>Stop Floor (S1): <span class="text-emerald-400 font-bold">₹${r.s1_support}</span></div>
+                                    <div>Target (R1): <span class="text-blue-300 font-bold">₹${r.r1_resistance}</span></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    longContainer.innerHTML = html;
+                }
+            }
+
+            if (shortContainer) {
+                if (shorts.length === 0) {
+                    shortContainer.innerHTML = `<div class="p-4 rounded-xl bg-black/40 border border-white/10 text-zinc-500 text-center text-xs font-mono">No overextended short setups in ${currentSector}.</div>`;
+                } else {
+                    let html = "";
+                    shorts.forEach(r => {
+                        html += `
+                            <div class="glass-panel-subtle hover:border-rose-500/40 rounded-xl p-3 sm:p-4 shadow-sm transition-all space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded font-mono font-bold text-xs bg-white/10 text-white border border-white/15">${r.symbol}</span>
+                                        <span class="text-xs font-mono font-bold text-white">₹${r.cmp}</span>
+                                    </div>
+                                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">${r.action}</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-[10px] font-mono border-t border-white/[0.08] pt-1.5 text-zinc-300">
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">DCF Fair</span>₹${r.dcf_intrinsic_value}</div>
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">Overvaluation</span><span class="text-rose-400 font-bold">${r.margin_of_safety_pct}%</span></div>
+                                    <div><span class="text-zinc-500 block text-[8px] uppercase">P/E Stretched</span><span class="text-zinc-300 font-bold">${r.pe_ratio}x</span></div>
+                                </div>
+                                <div class="flex items-center justify-between text-[10px] font-mono bg-black/40 p-2 rounded-lg border border-white/[0.06]">
+                                    <div>Exit Ceiling: <span class="text-rose-400 font-bold">₹${r.r1_resistance}</span></div>
+                                    <div>Short Target: <span class="text-blue-300 font-bold">₹${r.s1_support}</span></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    shortContainer.innerHTML = html;
+                }
+            }
+            refreshIcons();
+        }
+
+        // 9. Gann Hub Table
+        function renderGannHubTable() {
+            const tbody = document.getElementById("gannTableBody");
+            if (!tbody) return;
+
+            if (rawRankings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-zinc-500 font-mono">Loading Gann Square of 9...</td></tr>`;
+                return;
+            }
+
+            const top8 = rawRankings.slice(0, 8);
+            let html = "";
+            top8.forEach(r => {
+                const root = Math.sqrt(Math.max(1, r.cmp));
+                const g45 = (Math.pow(root + (45/180), 2)).toFixed(1);
+                const g90 = (Math.pow(root + (90/180), 2)).toFixed(1);
+                const g135 = (Math.pow(root + (135/180), 2)).toFixed(1);
+                const g180 = (Math.pow(root + (180/180), 2)).toFixed(1);
+                const score = r.gann_score || 80.0;
+
+                html += `
+                    <tr class="hover:bg-white/[0.05] transition-colors">
+                        <td class="p-3 font-bold text-white">${r.symbol}</td>
+                        <td class="p-3 text-white font-bold">₹${r.cmp}</td>
+                        <td class="p-3 text-zinc-400">₹${r.s1_support}</td>
+                        <td class="p-3 text-zinc-300">₹${g45}</td>
+                        <td class="p-3 text-white font-bold">₹${g90}</td>
+                        <td class="p-3 text-zinc-300">₹${g135}</td>
+                        <td class="p-3 text-emerald-400 font-bold">₹${g180}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/30 font-bold">${score}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            refreshIcons();
+        }
+
+        // 10. Watchlist
+        function toggleWatchlistStock(symbol) {
+            const item = rawRankings.find(r => r.symbol === symbol);
+            if (!item) return;
+
+            const idx = modelWatchlist.findIndex(w => w.symbol === symbol);
+            if (idx >= 0) {
+                modelWatchlist.splice(idx, 1);
+            } else {
+                modelWatchlist.push({
+                    symbol: item.symbol,
+                    sector: currentSector,
+                    cmp: item.cmp,
+                    action: item.action,
+                    action_type: item.action_type,
+                    dcf_intrinsic_value: item.dcf_intrinsic_value,
+                    margin_of_safety_pct: item.margin_of_safety_pct,
+                    pe_ratio: item.pe_ratio,
+                    s1_support: item.s1_support,
+                    r1_resistance: item.r1_resistance
+                });
+            }
+
+            localStorage.setItem("ALTAIR_MODEL_WATCHLIST", JSON.stringify(modelWatchlist));
+            updateWatchlistBadge();
+            renderTableAndCards(rawRankings);
+            if (activePage === "watchlist_builder") renderWatchlistTable();
+            refreshIcons();
+        }
+
+        function updateWatchlistBadge() {
+            const count = modelWatchlist.length;
+            const badge = document.getElementById("watchlistCountBadge");
+            if (badge) badge.innerText = count;
+
+            const bottomBadge = document.getElementById("mobileBottomWlBadge");
+            if (bottomBadge) {
+                bottomBadge.innerText = count;
+                if (count > 0) {
+                    bottomBadge.classList.remove("hidden");
+                } else {
+                    bottomBadge.classList.add("hidden");
+                }
+            }
+        }
+
+        function renderWatchlistTable() {
+            const tbody = document.getElementById("watchlistTableBody");
+            const mosEl = document.getElementById("wlAvgMoS");
+            const peEl = document.getElementById("wlAvgPE");
+            const itemsEl = document.getElementById("wlTotalItems");
+
+            if (itemsEl) itemsEl.innerText = `${modelWatchlist.length}`;
+
+            if (modelWatchlist.length === 0) {
+                if (mosEl) mosEl.innerText = "0.0%";
+                if (peEl) peEl.innerText = "0.0";
+                if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-zinc-500 font-mono">Your model watchlist is empty. Bookmark stocks using the bookmark icon in the Sector Scorecard!</td></tr>`;
+                return;
+            }
+
+            const avgMoS = (modelWatchlist.reduce((acc, w) => acc + (w.margin_of_safety_pct || 0), 0) / modelWatchlist.length).toFixed(1);
+            const avgPE = (modelWatchlist.reduce((acc, w) => acc + (w.pe_ratio || 0), 0) / modelWatchlist.length).toFixed(1);
+
+            if (mosEl) {
+                mosEl.innerText = (avgMoS > 0 ? "+" : "") + avgMoS + "%";
+                mosEl.className = "text-base sm:text-2xl font-black font-mono mt-0.5 " + (avgMoS >= 0 ? "text-emerald-400" : "text-rose-400");
+            }
+            if (peEl) peEl.innerText = avgPE;
+
+            if (tbody) {
+                let html = "";
+                modelWatchlist.forEach((w) => {
+                    const mosColor = w.margin_of_safety_pct > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+                    html += `
+                        <tr class="hover:bg-white/[0.04] transition-colors font-mono">
+                            <td class="p-3 font-bold text-white">${w.symbol}</td>
+                            <td class="p-3 text-zinc-400 text-[11px]">${w.sector}</td>
+                            <td class="p-3 text-white font-bold">₹${w.cmp}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${w.action_type === 'LONG' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">${w.action}</span></td>
+                            <td class="p-3 text-zinc-300">₹${w.dcf_intrinsic_value}</td>
+                            <td class="p-3 ${mosColor}">${w.margin_of_safety_pct > 0 ? "+" : ""}${w.margin_of_safety_pct}%</td>
+                            <td class="p-3 text-zinc-300">${w.pe_ratio}</td>
+                            <td class="p-3 text-emerald-400">₹${w.s1_support}</td>
+                            <td class="p-3 text-blue-300">₹${w.r1_resistance}</td>
+                            <td class="p-3 text-center">
+                                <button onclick="toggleWatchlistStock('${w.symbol}')" class="p-1 rounded text-zinc-500 hover:text-rose-400 transition-all cursor-pointer" title="Remove">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+            refreshIcons();
+        }
+
+        function clearWatchlist() {
+            if (confirm("Clear all items from your model watchlist?")) {
+                modelWatchlist = [];
+                localStorage.setItem("ALTAIR_MODEL_WATCHLIST", JSON.stringify(modelWatchlist));
+                updateWatchlistBadge();
+                renderTableAndCards(rawRankings);
+                renderWatchlistTable();
+            }
+        }
+
+        function exportWatchlistCsv() {
+            if (modelWatchlist.length === 0) {
+                alert("Your model watchlist is empty. Add some stocks first!");
+                return;
+            }
+            let csv = "Symbol,Sector,CMP (INR),Action,DCF Value,Margin of Safety (%),PE,S1 Floor,R1 Target\\n";
+            modelWatchlist.forEach(w => {
+                csv += `${w.symbol},"${w.sector}",${w.cmp},${w.action},${w.dcf_intrinsic_value},${w.margin_of_safety_pct},${w.pe_ratio},${w.s1_support},${w.r1_resistance}\\n`;
+            });
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "orion_model_watchlist.csv";
+            a.click();
+        }
+
+        function refreshData() {
+            loadSectorData(currentSector, isGannEnabled);
+        }
+
+        function exportToCsv() {
+            window.location.href = `/api/export?sector=${encodeURIComponent(currentSector)}&include_gann=${isGannEnabled}`;
+        }
+
+        window.addEventListener("resize", () => {
+            if (document.getElementById("advisorPlotlyBox")) {
+                Plotly.Plots.resize("advisorPlotlyBox");
+            }
+        });
+    </script>
+</body>
+</html>

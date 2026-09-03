@@ -554,7 +554,12 @@ def serve_terminal():
 
     <!-- Top Navigation Bar -->
     <header class="bg-darkCard/90 backdrop-blur border-b border-darkBorder px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 z-30">
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2.5 sm:space-x-3">
+            <!-- Mobile 3-Dash Menu Toggle Button (Phone View Only) -->
+            <button onclick="toggleMobileSidebar()" id="mobileMenuBtn" title="Open Navigation Menu"
+                    class="md:hidden flex items-center justify-center w-8 h-8 rounded-lg bg-darkBg hover:bg-slate-800 border border-darkBorder text-cyan-400 hover:text-white transition-all cursor-pointer">
+                <i class="fa-solid fa-bars text-sm"></i>
+            </button>
             <img src="/logo.png" alt="Altair Logo" class="w-8 h-8 rounded-lg object-contain border border-cyan-500/30 shadow-sm shadow-cyan-500/10">
             <div class="flex items-center gap-2">
                 <span class="font-black text-sm tracking-wider text-white">ALTAIR</span>
@@ -643,20 +648,24 @@ def serve_terminal():
     </div>
 
     <!-- Backdrop Overlay for Mobile when Sidebar is Expanded -->
-    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden"></div>
+    <div id="sidebarBackdrop" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
 
     <!-- Main Workspace Container -->
     <div class="flex-1 flex overflow-hidden relative">
 
-        <!-- 1. EXPANDABLE NAVIGATION SIDEBAR (Collapsible w-14 <-> w-64) -->
-        <aside id="mainSidebar" class="w-14 bg-darkSidebar border-r border-darkBorder flex flex-col shrink-0 z-30 transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden select-none">
+        <!-- 1. EXPANDABLE NAVIGATION SIDEBAR (Mobile Overlay Drawer / Desktop Collapsible) -->
+        <aside id="mainSidebar" class="fixed md:relative inset-y-0 left-0 z-50 md:z-20 -translate-x-full md:translate-x-0 w-64 md:w-14 bg-darkSidebar border-r border-darkBorder flex flex-col shrink-0 transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden select-none shadow-2xl md:shadow-none">
             
             <!-- Sidebar Header / Category Title -->
-            <div class="px-3 border-b border-darkBorder/70 flex items-center shrink-0 h-14 cursor-pointer hover:bg-slate-800/30 transition-all" onclick="toggleSidebar()" title="Toggle Sidebar">
-                <div class="flex items-center gap-3 w-full">
-                    <i class="fa-solid fa-layer-group text-white text-sm w-5 text-center shrink-0"></i>
-                    <span class="sidebar-label hidden text-xs font-bold tracking-wider text-white uppercase whitespace-nowrap">Strategies</span>
+            <div class="px-3 border-b border-darkBorder/70 flex items-center justify-between shrink-0 h-14">
+                <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-800/30 py-2 px-1 rounded-lg transition-all" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="fa-solid fa-layer-group text-cyan-400 text-sm w-5 text-center shrink-0"></i>
+                    <span class="sidebar-label inline md:hidden text-xs font-bold tracking-wider text-white uppercase whitespace-nowrap">Quantitative Lab</span>
                 </div>
+                <!-- Close Button on Mobile -->
+                <button onclick="closeMobileSidebar()" class="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer" title="Close Menu">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
             </div>
 
             <!-- Navigation Items List -->
@@ -1319,22 +1328,54 @@ def serve_terminal():
         }
 
         // 5. Sidebar Toggle & Accordions
+        let isMobileSidebarOpen = false;
+
+        function toggleMobileSidebar() {
+            if (window.innerWidth >= 768) {
+                toggleSidebar();
+                return;
+            }
+            isMobileSidebarOpen = !isMobileSidebarOpen;
+            const sidebar = document.getElementById("mainSidebar");
+            const backdrop = document.getElementById("sidebarBackdrop");
+            const labels = document.querySelectorAll(".sidebar-label");
+
+            if (isMobileSidebarOpen) {
+                sidebar.classList.remove("-translate-x-full");
+                sidebar.classList.add("translate-x-0");
+                backdrop.classList.remove("hidden");
+                // On mobile drawer, ensure all labels are displayed clearly
+                labels.forEach(l => l.classList.remove("hidden"));
+            } else {
+                sidebar.classList.add("-translate-x-full");
+                sidebar.classList.remove("translate-x-0");
+                backdrop.classList.add("hidden");
+            }
+        }
+
+        function closeMobileSidebar() {
+            if (isMobileSidebarOpen) {
+                toggleMobileSidebar();
+            }
+        }
+
         function toggleSidebar() {
+            if (window.innerWidth < 768) {
+                toggleMobileSidebar();
+                return;
+            }
             sidebarExpanded = !sidebarExpanded;
             const sidebar = document.getElementById("mainSidebar");
             const labels = document.querySelectorAll(".sidebar-label");
-            const backdrop = document.getElementById("sidebarBackdrop");
 
             if (sidebarExpanded) {
-                sidebar.classList.remove("w-14");
-                sidebar.classList.add("w-64");
+                sidebar.classList.remove("md:w-14");
+                sidebar.classList.add("md:w-64");
                 labels.forEach(l => l.classList.remove("hidden"));
-                backdrop.classList.remove("hidden");
             } else {
-                sidebar.classList.remove("w-64");
-                sidebar.classList.add("w-14");
+                sidebar.classList.remove("md:w-64");
+                sidebar.classList.add("md:w-14");
                 labels.forEach(l => l.classList.add("hidden"));
-                backdrop.classList.add("hidden");
             }
 
             setTimeout(() => {
@@ -1345,7 +1386,9 @@ def serve_terminal():
         }
 
         function toggleAccordion(groupId) {
-            if (!sidebarExpanded) {
+            if (window.innerWidth < 768 && !isMobileSidebarOpen) {
+                toggleMobileSidebar();
+            } else if (window.innerWidth >= 768 && !sidebarExpanded) {
                 toggleSidebar();
                 return;
             }
@@ -1364,8 +1407,8 @@ def serve_terminal():
         }
 
         function selectSidebarItem(prompt) {
-            if (window.innerWidth < 768 && sidebarExpanded) {
-                toggleSidebar();
+            if (window.innerWidth < 768 && isMobileSidebarOpen) {
+                closeMobileSidebar();
             }
             sendQuickPrompt(prompt);
         }

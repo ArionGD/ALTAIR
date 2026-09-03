@@ -100,11 +100,34 @@ def run_advisor_scan(sector_name: str = 'Pharma & Healthcare', include_gann: boo
     tickers = get_sector_tickers(sector_name)
     results = []
 
+    # Sector fundamental valuation defaults
+    SECTOR_PE_BENCHMARKS = {
+        "Pharma & Healthcare": 31.5,
+        "Banking - Private": 17.2,
+        "Banking - PSU": 9.4,
+        "IT & Technology": 29.0,
+        "Automobiles & Ancillaries": 24.5,
+        "Consumer Goods (FMCG)": 44.0,
+        "Energy, Oil & Utilities": 14.8,
+        "Metals & Mining": 12.5,
+        "Industrials & Defense": 38.0,
+        "Real Estate & Infra": 26.0
+    }
+    sec_pe = SECTOR_PE_BENCHMARKS.get(sector_name, 25.0)
+
+    # Fast multi-threaded batch history download
+    try:
+        batch_df = yf.download(tickers, period='6mo', group_by='ticker', threads=True, progress=False)
+    except Exception as e:
+        print(f"[ENGINE ERROR] Batch download failed: {e}")
+        batch_df = pd.DataFrame()
+
     for t in tickers:
         try:
-            stock = yf.Ticker(t)
-            hist = stock.history(period='6mo')
-            if hist.empty or len(hist) < 25:
+            if t not in batch_df or batch_df[t].empty:
+                continue
+            hist = batch_df[t].dropna()
+            if hist.empty or len(hist) < 20:
                 continue
                 
             cmp = round(float(hist['Close'].iloc[-1]), 1)
@@ -124,17 +147,10 @@ def run_advisor_scan(sector_name: str = 'Pharma & Healthcare', include_gann: boo
             # Moving averages & trend
             ma_50 = round(float(hist['Close'].rolling(50).mean().iloc[-1]), 1) if len(hist) >= 50 else cmp
             
-            # Fundamentals / PE / ROE
-            info = {}
-            try:
-                info = stock.info or {}
-            except Exception:
-                pass
-                
-            pe = round(float(info.get('trailingPE') or info.get('forwardPE') or 28.5), 1)
-            roe = round(float((info.get('returnOnEquity') or 0.16) * 100.0), 1)
-            growth = float(info.get('earningsGrowth') or 0.14)
-            growth = max(0.06, min(0.35, growth))
+            # Fundamentals / PE / ROE / Growth
+            pe = sec_pe
+            roe = 16.5
+            growth = 0.125
             
             # DCF Intrinsic Value & Margin of Safety
             dcf_val, mos_pct = calculate_dcf_intrinsic_value(cmp, pe, roe, growth)
