@@ -99,14 +99,23 @@ try:
 except Exception as _ql_err:
     print("Quant Lab mount notice:", _ql_err)
 
-@app.middleware("http")
-async def host_subdomain_router(request: Request, call_next):
-    host = request.headers.get("host", "").lower()
-    if advisor_app and host.startswith("advisor."):
-        return await advisor_app(request.scope, request.receive, request._send)
-    elif quant_lab_app and (host.startswith("quant.") or host.startswith("lab.")):
-        return await quant_lab_app(request.scope, request.receive, request._send)
-    return await call_next(request)
+class SubdomainRoutingMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = dict(scope.get("headers", []))
+            host = headers.get(b"host", b"").decode("latin1").lower()
+            if advisor_app and host.startswith("advisor."):
+                await advisor_app(scope, receive, send)
+                return
+            elif quant_lab_app and (host.startswith("quant.") or host.startswith("lab.")):
+                await quant_lab_app(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+app.add_middleware(SubdomainRoutingMiddleware)
 
 # Mount React static files if built (Production configuration)
 DIST_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
